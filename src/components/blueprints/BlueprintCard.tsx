@@ -55,29 +55,27 @@ export const BlueprintCard = memo(function BlueprintCard({ blueprint, onClick }:
         }
       }}
       aria-label={`View details for ${blueprint.title}, ${blueprint.solutionTypeShort} blueprint with ${blueprint.complexity} complexity`}
-      className="bg-white border-2 border-gray-200 rounded-xl p-6 cursor-pointer hover:border-[hsl(var(--orange))] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2"
+      className="bg-white border-2 border-gray-200 rounded-xl p-6 cursor-pointer hover:border-blue-500 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
     >
-      {/* Icon and Featured Badge */}
+      {/* Icon and Badges Header */}
       <div className="flex justify-between items-start mb-4">
-        <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center" aria-hidden="true">
-          {IconComponent && <IconComponent className="text-white" size={40} />}
+        <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center" aria-hidden="true">
+          {IconComponent && <IconComponent className="text-blue-600" size={40} />}
         </div>
-        {blueprint.featured && (
-          <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" aria-label="Featured blueprint" />
-        )}
-      </div>
-
-      {/* Solution Type Badge */}
-      <div className="mb-3">
-        <Badge
-          className={`${
-            solutionTypeColors[blueprint.solutionTypeShort]
-          } border-0 text-xs font-semibold`}
-          role="status"
-          aria-label={`Solution type: ${blueprint.solutionTypeShort}`}
-        >
-          {blueprint.solutionTypeShort}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge
+            className={`${
+              solutionTypeColors[blueprint.solutionTypeShort]
+            } border-0 text-xs font-bold uppercase px-3 py-1 rounded-full`}
+            role="status"
+            aria-label={`Solution type: ${blueprint.solutionTypeShort}`}
+          >
+            {blueprint.solutionTypeShort}
+          </Badge>
+          {blueprint.featured && (
+            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" aria-label="Featured blueprint" />
+          )}
+        </div>
       </div>
 
       {/* Title and Description */}
@@ -154,7 +152,7 @@ export const BlueprintCard = memo(function BlueprintCard({ blueprint, onClick }:
           {blueprint.complexity}
         </Badge>
         <button 
-          className="bg-[hsl(var(--orange))] text-white hover:bg-[hsl(var(--orange-hover))] px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 hover:shadow-lg min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2"
+          className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 hover:shadow-lg min-h-[44px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2"
           aria-label={`View ${blueprint.title} blueprint details`}
           tabIndex={-1}
         >
