@@ -28,6 +28,22 @@ const filterLabels: Record<string, string> = {
   verifiedLearner: "Verified Learner",
   completionStatus: "Completion Status",
   date: "Date",
+  // Blueprints-specific filters
+  solutionType: "Solution Type",
+  blueprintScope: "Blueprint Scope",
+  maturityLevel: "Maturity Level",
+  industryFocus: "Industry Focus",
+  technicalComplexity: "Technical Complexity",
+  deploymentModel: "Deployment Model",
+  includesDiagrams: "Includes Diagrams",
+  includesComponentList: "Includes Component List",
+  buildComplexity: "Build Complexity",
+  technologyStack: "Technology Stack",
+  deploymentTarget: "Deployment Target",
+  includesAutomation: "Includes Automation",
+  includesCodeSamples: "Includes Code Samples",
+  implementationTime: "Implementation Time",
+  skillLevel: "Skill Level",
 };
 
 export function FilterPanel({
@@ -39,6 +55,7 @@ export function FilterPanel({
   onClose,
 }: FilterPanelProps) {
   const hasActiveFilters = Object.values(selectedFilters).some(arr => arr.length > 0);
+  const activeFilterCount = Object.values(selectedFilters).reduce((sum, arr) => sum + arr.length, 0);
 
   return (
     <>
@@ -47,11 +64,14 @@ export function FilterPanel({
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
 
       {/* Filter Panel */}
       <aside
+        role="complementary"
+        aria-label={`Filters${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ''}`}
         className={`
           fixed lg:relative inset-y-0 left-0 z-50 lg:z-0
           w-72 bg-white border-r border-gray-200 p-6 overflow-y-auto
@@ -62,21 +82,26 @@ export function FilterPanel({
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-5 h-5 text-gray-700" />
-            <h3 className="text-lg font-bold text-gray-900">Filters</h3>
+            <SlidersHorizontal className="w-5 h-5 text-gray-700" aria-hidden="true" />
+            <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+            {activeFilterCount > 0 && (
+              <span className="sr-only">{activeFilterCount} filters active</span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {hasActiveFilters && (
               <button
                 onClick={onClearAll}
-                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                className="text-sm text-orange-600 hover:text-orange-700 font-medium min-h-[44px] px-2 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2 rounded"
+                aria-label={`Clear all ${activeFilterCount} active filters`}
               >
                 Clear All
               </button>
             )}
             <button
               onClick={onClose}
-              className="lg:hidden p-1 text-gray-400 hover:text-gray-600"
+              className="lg:hidden p-2 text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2 rounded"
+              aria-label="Close filters panel"
             >
               <X className="w-5 h-5" />
             </button>
@@ -84,28 +109,45 @@ export function FilterPanel({
         </div>
 
         {/* Filter Groups */}
-        {Object.entries(filters).map(([group, options]) => (
-          <div key={group} className="mb-6 pb-6 border-b border-gray-100 last:border-0">
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">
-              {filterLabels[group] || group}
-            </h4>
-            <div className="space-y-2">
-              {options.map((option) => (
-                <label
-                  key={option}
-                  className="flex items-center gap-2 py-1 text-sm text-gray-700 cursor-pointer hover:text-gray-900"
-                >
-                  <Checkbox
-                    checked={selectedFilters[group]?.includes(option) || false}
-                    onCheckedChange={() => onFilterChange(group, option)}
-                    className="border-gray-300 data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600"
-                  />
-                  {option}
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
+        {Object.entries(filters).map(([group, options]) => {
+          const selectedCount = selectedFilters[group]?.length || 0;
+          return (
+            <fieldset key={group} className="mb-6 pb-6 border-b border-gray-100 last:border-0">
+              <legend className="text-sm font-semibold text-gray-900 mb-3">
+                {filterLabels[group] || group}
+                {selectedCount > 0 && (
+                  <span className="ml-2 text-xs font-normal text-gray-500">
+                    ({selectedCount} selected)
+                  </span>
+                )}
+              </legend>
+              <div className="space-y-2">
+                {options.map((option) => {
+                  const isChecked = selectedFilters[group]?.includes(option) || false;
+                  const checkboxId = `filter-${group}-${option.replace(/\s+/g, '-').toLowerCase()}`;
+                  return (
+                    <div key={option} className="flex items-center gap-2 py-2 min-h-[44px]">
+                      <Checkbox
+                        id={checkboxId}
+                        checked={isChecked}
+                        onCheckedChange={() => onFilterChange(group, option)}
+                        className="border-gray-300 data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600 w-5 h-5"
+                        aria-describedby={`${checkboxId}-label`}
+                      />
+                      <label
+                        id={`${checkboxId}-label`}
+                        htmlFor={checkboxId}
+                        className="text-sm text-gray-700 cursor-pointer hover:text-gray-900 flex-1"
+                      >
+                        {option}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </fieldset>
+          );
+        })}
       </aside>
     </>
   );
@@ -116,10 +158,11 @@ export function MobileFilterButton({ onClick }: { onClick: () => void }) {
   return (
     <Button
       onClick={onClick}
-      className="fixed bottom-6 right-6 lg:hidden z-30 bg-orange-600 hover:bg-orange-700 text-white rounded-full px-6 py-3 shadow-lg flex items-center gap-2"
+      className="fixed bottom-6 right-6 lg:hidden z-30 bg-orange-600 hover:bg-orange-700 text-white rounded-full px-6 py-3 shadow-lg flex items-center gap-2 min-h-[44px] min-w-[44px] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2"
+      aria-label="Open filters panel"
     >
-      <SlidersHorizontal className="w-4 h-4" />
-      Filters
+      <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+      <span>Filters</span>
     </Button>
   );
 }

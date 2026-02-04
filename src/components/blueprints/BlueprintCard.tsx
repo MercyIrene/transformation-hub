@@ -1,0 +1,166 @@
+import { Star, icons, LucideIcon } from "lucide-react";
+import { SolutionSpec } from "@/data/blueprints/solutionSpecs";
+import { SolutionBuild } from "@/data/blueprints/solutionBuilds";
+import { Badge } from "@/components/ui/badge";
+import { memo, useMemo } from "react";
+
+interface BlueprintCardProps {
+  blueprint: SolutionSpec | SolutionBuild;
+  onClick: () => void;
+}
+
+// Solution type color mapping
+const solutionTypeColors: Record<string, string> = {
+  DBP: "bg-purple-100 text-purple-700",
+  DXP: "bg-pink-100 text-pink-700",
+  DWS: "bg-blue-100 text-blue-700",
+  DIA: "bg-green-100 text-green-700",
+  SDO: "bg-orange-100 text-orange-700",
+};
+
+// Complexity color mapping
+const complexityColors: Record<string, string> = {
+  Low: "bg-green-100 text-green-700",
+  Medium: "bg-yellow-100 text-yellow-700",
+  High: "bg-orange-100 text-orange-700",
+  "Very High": "bg-red-100 text-red-700",
+};
+
+export const BlueprintCard = memo(function BlueprintCard({ blueprint, onClick }: BlueprintCardProps) {
+  // Get the icon component dynamically - memoized
+  const IconComponent: LucideIcon = useMemo(
+    () => icons[blueprint.icon as keyof typeof icons] as LucideIcon,
+    [blueprint.icon]
+  );
+
+  // Determine if this is a SolutionSpec or SolutionBuild
+  const isSolutionSpec = "maturityLevel" in blueprint;
+
+  // Get up to 3 key technologies - memoized
+  const { displayTechnologies, remainingCount } = useMemo(() => {
+    const display = blueprint.keyTechnologies.slice(0, 3);
+    const remaining = blueprint.keyTechnologies.length - 3;
+    return { displayTechnologies: display, remainingCount: remaining };
+  }, [blueprint.keyTechnologies]);
+
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      aria-label={`View details for ${blueprint.title}, ${blueprint.solutionTypeShort} blueprint with ${blueprint.complexity} complexity`}
+      className="bg-white border-2 border-gray-200 rounded-xl p-6 cursor-pointer hover:border-[hsl(var(--orange))] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2"
+    >
+      {/* Icon and Featured Badge */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center" aria-hidden="true">
+          {IconComponent && <IconComponent className="text-white" size={40} />}
+        </div>
+        {blueprint.featured && (
+          <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" aria-label="Featured blueprint" />
+        )}
+      </div>
+
+      {/* Solution Type Badge */}
+      <div className="mb-3">
+        <Badge
+          className={`${
+            solutionTypeColors[blueprint.solutionTypeShort]
+          } border-0 text-xs font-semibold`}
+          role="status"
+          aria-label={`Solution type: ${blueprint.solutionTypeShort}`}
+        >
+          {blueprint.solutionTypeShort}
+        </Badge>
+      </div>
+
+      {/* Title and Description */}
+      <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+        {blueprint.title}
+      </h3>
+      <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+        {blueprint.description}
+      </p>
+
+      {/* Features Section */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2 mb-4" role="list" aria-label="Blueprint features">
+        <div className="text-xs text-gray-700" role="listitem">
+          <span className="font-semibold">Scope:</span> {blueprint.scope}
+        </div>
+        {isSolutionSpec && (
+          <div className="text-xs text-gray-700" role="listitem">
+            <span className="font-semibold">Maturity:</span>{" "}
+            {(blueprint as SolutionSpec).maturityLevel}
+          </div>
+        )}
+        {!isSolutionSpec && (
+          <div className="text-xs text-gray-700" role="listitem">
+            <span className="font-semibold">Build:</span>{" "}
+            {(blueprint as SolutionBuild).buildComplexity}
+          </div>
+        )}
+        {isSolutionSpec && (blueprint as SolutionSpec).includesDiagrams && (
+          <div className="text-xs text-gray-700" role="listitem">
+            ✓ Architecture Diagrams
+          </div>
+        )}
+        {isSolutionSpec && (blueprint as SolutionSpec).includesComponents && (
+          <div className="text-xs text-gray-700" role="listitem">
+            ✓ {blueprint.componentCount} Components
+          </div>
+        )}
+        {!isSolutionSpec && (blueprint as SolutionBuild).includesCodeSamples && (
+          <div className="text-xs text-gray-700" role="listitem">
+            ✓ Code Samples Included
+          </div>
+        )}
+      </div>
+
+      {/* Key Technologies */}
+      <div className="mb-4">
+        <div className="flex flex-wrap gap-2" role="list" aria-label="Key technologies">
+          {displayTechnologies.map((tech, index) => (
+            <span
+              key={index}
+              role="listitem"
+              className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs"
+            >
+              {tech}
+            </span>
+          ))}
+          {remainingCount > 0 && (
+            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-semibold" aria-label={`${remainingCount} more technologies`}>
+              +{remainingCount}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Footer with Complexity Badge and Button */}
+      <div className="flex justify-between items-center border-t border-gray-200 pt-4">
+        <Badge
+          className={`${
+            complexityColors[blueprint.complexity]
+          } border-0 text-xs font-semibold`}
+          role="status"
+          aria-label={`Complexity level: ${blueprint.complexity}`}
+        >
+          {blueprint.complexity}
+        </Badge>
+        <button 
+          className="bg-[hsl(var(--orange))] text-white hover:bg-[hsl(var(--orange-hover))] px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 hover:shadow-lg min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2"
+          aria-label={`View ${blueprint.title} blueprint details`}
+          tabIndex={-1}
+        >
+          View Blueprint
+        </button>
+      </div>
+    </article>
+  );
+});
