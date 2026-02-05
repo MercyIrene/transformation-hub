@@ -18,6 +18,8 @@ import BlueprintDetailPage from "./pages/BlueprintDetailPage";
 import SupportServicesPage from "./pages/SupportServicesPage";
 import SupportServicesDetailPage from "./pages/SupportServicesDetailPage";
 import NotFound from "./pages/NotFound";
+ import DigitalIntelligencePage from "./pages/DigitalIntelligencePage";
+ import DigitalIntelligenceDetailPage from "./pages/DigitalIntelligenceDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -63,10 +65,13 @@ const App = () => (
           <Route path="/marketplaces/support-services" element={<SupportServicesPage />} />
           <Route path="/marketplaces/support-services/:tab/:cardId" element={<SupportServicesDetailPage />} />
           
-          {/* Marketplace routes */}
+           {/* Digital Intelligence marketplace */}
+           <Route path="/marketplaces/digital-intelligence" element={<DigitalIntelligencePage />} />
+           <Route path="/marketplaces/digital-intelligence/:tab/:cardId" element={<DigitalIntelligenceDetailPage />} />
+ 
+           {/* Other marketplace routes */}
           <Route path="/marketplaces/lifecycle-management" element={<ComingSoonPage pageName="Lifecycle Management" />} />
           <Route path="/marketplaces/portfolio-management" element={<ComingSoonPage pageName="Portfolio Management" />} />
-          <Route path="/marketplaces/digital-intelligence" element={<ComingSoonPage pageName="Digital Intelligence" />} />
           
           {/* Resource routes */}
           <Route path="/best-practices" element={<ComingSoonPage pageName="Best Practices" />} />
