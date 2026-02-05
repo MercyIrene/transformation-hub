@@ -1,6 +1,21 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState, lazy, Suspense } from "react";
-import { ChevronRight, Star, Download, ArrowLeft, icons, LucideIcon } from "lucide-react";
+import { useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import {
+  ChevronRight,
+  Star,
+  ArrowLeft,
+  Lock,
+  BookOpen,
+  Layers,
+  Box,
+  Clock,
+  FolderOpen,
+  FileText,
+  Wrench,
+  Lightbulb,
+  Target,
+  CheckCircle2,
+} from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/badge";
@@ -9,11 +24,30 @@ import {
   solutionBuilds,
   type SolutionSpec,
   type SolutionBuild,
+  getBlueprintDetail,
+  generateGenericDetailFromSpec,
+  generateGenericDetailFromBuild,
+  type BlueprintDetail,
 } from "@/data/blueprints";
+import {
+  DiagramViewer,
+  ComponentsTable,
+  ImplementationTimeline,
+} from "@/components/blueprints";
+import { LoginModal } from "@/components/learningCenter";
 
-type TabValue = "solution-specs" | "solution-build";
+// ─── Constants ───────────────────────────────────────────────────────────────
 
-// Solution type color mapping
+type ContentTab = "about" | "architecture" | "components" | "implementation" | "resources";
+
+const CONTENT_TABS: { key: ContentTab; label: string; icon: React.ReactNode }[] = [
+  { key: "about", label: "About", icon: <BookOpen className="w-4 h-4" /> },
+  { key: "architecture", label: "Architecture", icon: <Layers className="w-4 h-4" /> },
+  { key: "components", label: "Components", icon: <Box className="w-4 h-4" /> },
+  { key: "implementation", label: "Implementation", icon: <Clock className="w-4 h-4" /> },
+  { key: "resources", label: "Resources", icon: <FolderOpen className="w-4 h-4" /> },
+];
+
 const solutionTypeColors: Record<string, string> = {
   DBP: "bg-purple-100 text-purple-700",
   DXP: "bg-pink-100 text-pink-700",
@@ -22,7 +56,6 @@ const solutionTypeColors: Record<string, string> = {
   SDO: "bg-orange-100 text-orange-700",
 };
 
-// Complexity color mapping
 const complexityColors: Record<string, string> = {
   Low: "bg-green-100 text-green-700",
   Medium: "bg-yellow-100 text-yellow-700",
@@ -30,43 +63,54 @@ const complexityColors: Record<string, string> = {
   "Very High": "bg-red-100 text-red-700",
 };
 
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export default function BlueprintDetailPage() {
-  const { tab, blueprintId } = useParams<{ tab: TabValue; blueprintId: string }>();
+  const { tab, blueprintId } = useParams<{ tab: string; blueprintId: string }>();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<ContentTab>("about");
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  // Handle invalid tab parameter - default to 'solution-specs'
-  const validTab: TabValue = tab === "solution-build" ? "solution-build" : "solution-specs";
+  // Determine the source tab
+  const isSolutionSpec = tab === "solution-specs";
 
-  // Fetch blueprint data based on tab and ID
-  const blueprint =
-    validTab === "solution-specs"
-      ? solutionSpecs.find((b) => b.id === blueprintId)
-      : solutionBuilds.find((b) => b.id === blueprintId);
+  // Find blueprint from the correct data array
+  const blueprint: SolutionSpec | SolutionBuild | undefined = isSolutionSpec
+    ? solutionSpecs.find((b) => b.id === blueprintId)
+    : solutionBuilds.find((b) => b.id === blueprintId);
 
-  // Handle invalid blueprint ID - redirect to marketplace
-  useEffect(() => {
-    if (!blueprint) {
-      navigate(`/marketplaces/blueprints?tab=${validTab}`, { replace: true });
-    } else {
-      // Simulate loading state for better UX
-      setIsLoading(true);
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [blueprint, navigate, validTab]);
+  // Resolve detailed data
+  const detail: BlueprintDetail | undefined = blueprintId
+    ? getBlueprintDetail(blueprintId) ??
+      (blueprint
+        ? isSolutionSpec
+          ? generateGenericDetailFromSpec(blueprint as SolutionSpec)
+          : generateGenericDetailFromBuild(blueprint as SolutionBuild)
+        : undefined)
+    : undefined;
 
-  // Show loading state
-  if (isLoading || !blueprint) {
+  // ─── 404 ────────────────────────────────────────────────────────────────────
+
+  if (!blueprint || !detail) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <Header />
         <main className="flex-1 flex items-center justify-center" id="main-content">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[hsl(var(--orange))]" aria-label="Loading"></div>
-            <p className="mt-4 text-gray-600">Loading blueprint...</p>
+          <div className="text-center max-w-md mx-auto px-4">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <BookOpen className="w-10 h-10 text-gray-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-3">Blueprint Not Found</h1>
+            <p className="text-gray-600 mb-8">
+              The blueprint you are looking for does not exist or may have been moved.
+            </p>
+            <Link
+              to="/marketplaces/blueprints"
+              className="inline-flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 rounded-lg text-sm font-semibold transition-colors"
+            >
+              <ArrowLeft size={18} />
+              Back to Blueprints
+            </Link>
           </div>
         </main>
         <Footer />
@@ -74,21 +118,247 @@ export default function BlueprintDetailPage() {
     );
   }
 
-  // Determine if this is a SolutionSpec or SolutionBuild
-  const isSolutionSpec = validTab === "solution-specs";
+  // ─── Derived values ─────────────────────────────────────────────────────────
+
   const spec = blueprint as SolutionSpec;
   const build = blueprint as SolutionBuild;
+  const tabDisplayName = isSolutionSpec ? "Solution Specs" : "Solution Builds";
 
-  // Get the icon component dynamically
-  const IconComponent: LucideIcon = icons[blueprint.icon as keyof typeof icons] as LucideIcon;
-
-  // Tab display name
-  const tabName = validTab === "solution-specs" ? "Solution Specs" : "Solution Build";
-
-  // Handle back navigation
   const handleBackClick = () => {
-    navigate(`/marketplaces/blueprints?tab=${validTab}`);
+    navigate(`/marketplaces/blueprints?tab=${tab}`);
   };
+
+  const handleLoginSuccess = () => {
+    setShowLoginModal(false);
+    navigate("/transact-app");
+  };
+
+  // ─── Tab Content Renderers ──────────────────────────────────────────────────
+
+  const renderAboutTab = () => (
+    <div className="space-y-8">
+      {/* Overview */}
+      <section>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Overview</h2>
+        <p className="text-gray-700 leading-relaxed">{detail.overview}</p>
+      </section>
+
+      {/* Architecture Philosophy */}
+      {detail.architecturePhilosophy.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-blue-600" />
+            Architecture Philosophy
+          </h2>
+          <ul className="space-y-3">
+            {detail.architecturePhilosophy.map((item, index) => (
+              <li key={index} className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Key Principles */}
+      {detail.keyPrinciples.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Target className="w-5 h-5 text-indigo-600" />
+            Key Principles
+          </h2>
+          <ul className="space-y-3">
+            {detail.keyPrinciples.map((item, index) => (
+              <li key={index} className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-700">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Use Cases */}
+      {detail.useCases.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Use Cases</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {detail.useCases.map((useCase, index) => (
+              <div
+                key={index}
+                className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700"
+              >
+                {useCase}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+
+  const renderArchitectureTab = () => (
+    <div className="space-y-10">
+      {/* Diagram Viewer */}
+      <section>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Architecture Diagrams</h2>
+        <DiagramViewer diagrams={detail.architectureDiagrams} />
+      </section>
+
+      {/* Architecture Layers */}
+      {detail.architectureLayers.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Architecture Layers</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {detail.architectureLayers.map((layer, index) => (
+              <div
+                key={index}
+                className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Layers className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-900">{layer.layer}</h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">{layer.description}</p>
+                <div className="flex flex-wrap gap-2">
+                  {layer.components.map((component, i) => (
+                    <span
+                      key={i}
+                      className="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-md text-xs font-medium"
+                    >
+                      {component}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+
+  const renderComponentsTab = () => (
+    <div>
+      <ComponentsTable components={detail.components} />
+    </div>
+  );
+
+  const renderImplementationTab = () => (
+    <div>
+      <ImplementationTimeline
+        phases={detail.implementationPhases}
+        approach={detail.implementationApproach}
+        prerequisites={detail.prerequisites}
+        criticalSuccessFactors={detail.criticalSuccessFactors}
+      />
+    </div>
+  );
+
+  const renderResourcesTab = () => (
+    <div className="space-y-8">
+      {/* Related Blueprints */}
+      {detail.relatedBlueprints.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Layers className="w-5 h-5 text-blue-600" />
+            Related Blueprints
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {detail.relatedBlueprints.map((name, index) => (
+              <div
+                key={index}
+                className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-3 hover:border-blue-300 hover:shadow-sm transition-all"
+              >
+                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="w-4 h-4 text-blue-600" />
+                </div>
+                <span className="text-sm font-medium text-gray-900">{name}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Related Documents */}
+      {detail.relatedDocuments.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-green-600" />
+            Related Documents
+          </h2>
+          <div className="space-y-3">
+            {detail.relatedDocuments.map((doc, index) => (
+              <div
+                key={index}
+                className="bg-white border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:shadow-sm transition-all"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FileText className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-sm font-semibold text-gray-900">{doc.name}</h3>
+                      <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-medium">
+                        {doc.type}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">{doc.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Tools */}
+      {detail.tools.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Wrench className="w-5 h-5 text-orange-600" />
+            Tools
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {detail.tools.map((tool, index) => (
+              <div
+                key={index}
+                className="bg-white border border-gray-200 rounded-lg px-4 py-3 flex items-center gap-3 hover:border-orange-300 hover:shadow-sm transition-all"
+              >
+                <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Wrench className="w-4 h-4 text-orange-600" />
+                </div>
+                <span className="text-sm font-medium text-gray-700">{tool}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+
+  const renderActiveTabContent = () => {
+    switch (activeTab) {
+      case "about":
+        return renderAboutTab();
+      case "architecture":
+        return renderArchitectureTab();
+      case "components":
+        return renderComponentsTab();
+      case "implementation":
+        return renderImplementationTab();
+      case "resources":
+        return renderResourcesTab();
+      default:
+        return renderAboutTab();
+    }
+  };
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -97,293 +367,244 @@ export default function BlueprintDetailPage() {
       <main className="flex-1" id="main-content">
         <div className="max-w-7xl mx-auto px-4 py-12">
           {/* Breadcrumb Navigation */}
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-gray-600 mb-6 flex-wrap">
+          <nav
+            aria-label="Breadcrumb"
+            className="flex items-center gap-2 text-sm text-gray-600 mb-6 flex-wrap"
+          >
             <button
               onClick={() => navigate("/")}
-              className="hover:text-[hsl(var(--orange))] transition-colors duration-300 min-h-[44px] px-2 flex items-center focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2 rounded"
-              aria-label="Go to home page"
+              className="hover:text-blue-600 transition-colors"
             >
               Home
             </button>
             <ChevronRight size={16} aria-hidden="true" />
             <button
               onClick={() => navigate("/marketplaces")}
-              className="hover:text-[hsl(var(--orange))] transition-colors duration-300 min-h-[44px] px-2 flex items-center focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2 rounded"
-              aria-label="Go to marketplaces"
+              className="hover:text-blue-600 transition-colors"
             >
               Marketplaces
             </button>
             <ChevronRight size={16} aria-hidden="true" />
             <button
               onClick={() => navigate("/marketplaces/blueprints")}
-              className="hover:text-[hsl(var(--orange))] transition-colors duration-300 min-h-[44px] px-2 flex items-center focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2 rounded"
-              aria-label="Go to blueprints marketplace"
+              className="hover:text-blue-600 transition-colors"
             >
               Blueprints
             </button>
             <ChevronRight size={16} aria-hidden="true" />
-            <button
-              onClick={handleBackClick}
-              className="hover:text-[hsl(var(--orange))] transition-colors duration-300 min-h-[44px] px-2 flex items-center focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2 rounded"
-              aria-label={`Go back to ${tabName}`}
-            >
-              {tabName}
-            </button>
-            <ChevronRight size={16} aria-hidden="true" />
-            <span className="text-gray-900 font-medium" aria-current="page">{blueprint.title}</span>
+            <span className="text-gray-900 font-medium" aria-current="page">
+              {blueprint.title}
+            </span>
           </nav>
 
-          {/* Header Section */}
-          <article aria-labelledby="blueprint-title">
-            <header className="bg-white border border-gray-200 rounded-xl p-8 mb-6">
-              <div className="flex items-start gap-6">
-                {/* Icon */}
-                <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center flex-shrink-0" aria-hidden="true">
-                  {IconComponent && <IconComponent className="text-white" size={48} />}
-                </div>
+          {/* Back Button */}
+          <button
+            onClick={handleBackClick}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors mb-6"
+          >
+            <ArrowLeft size={16} />
+            Back to Blueprints
+          </button>
 
-                {/* Title and Badges */}
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-3">
-                    <h1 id="blueprint-title" className="text-3xl lg:text-4xl font-bold text-primary-navy">
-                      {blueprint.title}
-                    </h1>
-                    {blueprint.featured && (
-                      <Star className="w-8 h-8 text-yellow-400 fill-yellow-400 flex-shrink-0 ml-4" aria-label="Featured blueprint" />
-                    )}
-                  </div>
+          {/* Blueprint Header */}
+          <div className="bg-white border border-gray-200 rounded-xl p-8 mb-8">
+            {/* Top Row: Badge + Featured Star */}
+            <div className="flex items-center gap-3 mb-4">
+              <Badge
+                className={`${
+                  solutionTypeColors[blueprint.solutionTypeShort] || "bg-gray-100 text-gray-700"
+                } border-0 text-sm font-semibold`}
+              >
+                {blueprint.solutionType}
+              </Badge>
+              {blueprint.featured && (
+                <Star
+                  className="w-5 h-5 text-yellow-400 fill-yellow-400"
+                  aria-label="Featured blueprint"
+                />
+              )}
+            </div>
 
-                  {/* Badges */}
-                  <div className="flex flex-wrap gap-2" role="list" aria-label="Blueprint attributes">
-                    <Badge
-                      className={`${
-                        solutionTypeColors[blueprint.solutionTypeShort]
-                      } border-0 text-sm font-semibold`}
-                      role="listitem"
-                      aria-label={`Solution type: ${blueprint.solutionType}`}
-                    >
-                      {blueprint.solutionType}
-                    </Badge>
-                    <Badge
-                      className={`${
-                        complexityColors[blueprint.complexity]
-                      } border-0 text-sm font-semibold`}
-                      role="listitem"
-                      aria-label={`Complexity level: ${blueprint.complexity}`}
-                    >
-                      {blueprint.complexity} Complexity
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </header>
+            {/* Title */}
+            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+              {blueprint.title}
+            </h1>
 
-          {/* Overview Section */}
-          <section className="bg-white border border-gray-200 rounded-xl p-8 mb-6" aria-labelledby="overview-heading">
-            <h2 id="overview-heading" className="text-2xl font-bold text-primary-navy mb-4">Overview</h2>
-            <p className="text-base text-gray-700 leading-relaxed">
+            {/* Description */}
+            <p className="text-gray-600 text-base leading-relaxed mb-6 max-w-3xl">
               {blueprint.description}
             </p>
-          </section>
 
-          {/* Metadata Section */}
-          <section className="bg-white border border-gray-200 rounded-xl p-8 mb-6" aria-labelledby="details-heading">
-            <h2 id="details-heading" className="text-2xl font-bold text-primary-navy mb-4">Details</h2>
-            <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Key Metadata */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+              {/* Scope */}
               <div>
-                <dt className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                  Scope
-                </dt>
-                <dd className="text-base text-gray-900">{blueprint.scope}</dd>
+                <dt className="text-xs font-semibold text-gray-500 uppercase mb-1">Scope</dt>
+                <dd className="text-sm text-gray-900 font-medium">{blueprint.scope}</dd>
               </div>
 
-              {isSolutionSpec && (
-                <>
-                  <div>
-                    <dt className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                      Maturity Level
-                    </dt>
-                    <dd className="text-base text-gray-900">{spec.maturityLevel}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                      Industry Focus
-                    </dt>
-                    <dd className="text-base text-gray-900">{spec.industryFocus}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                      Deployment Model
-                    </dt>
-                    <dd className="text-base text-gray-900">{spec.deploymentModel}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                      Technical Complexity
-                    </dt>
-                    <dd className="text-base text-gray-900">{spec.complexity}</dd>
-                  </div>
-                </>
+              {/* Maturity or Build Complexity */}
+              {isSolutionSpec ? (
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Maturity
+                  </dt>
+                  <dd className="text-sm text-gray-900 font-medium">{spec.maturityLevel}</dd>
+                </div>
+              ) : (
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Build Complexity
+                  </dt>
+                  <dd className="text-sm text-gray-900 font-medium">{build.buildComplexity}</dd>
+                </div>
               )}
 
-              {!isSolutionSpec && (
-                <>
-                  <div>
-                    <dt className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                      Build Complexity
-                    </dt>
-                    <dd className="text-base text-gray-900">{build.buildComplexity}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                      Technology Stack
-                    </dt>
-                    <dd className="text-base text-gray-900">{build.technologyStack}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                      Deployment Target
-                    </dt>
-                    <dd className="text-base text-gray-900">{build.deploymentTarget}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                      Implementation Time
-                    </dt>
-                    <dd className="text-base text-gray-900">{build.implementationTime}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                      Skill Level
-                    </dt>
-                    <dd className="text-base text-gray-900">{build.skillLevel}</dd>
-                  </div>
-                </>
-              )}
-            </dl>
-          </section>
+              {/* Complexity */}
+              <div>
+                <dt className="text-xs font-semibold text-gray-500 uppercase mb-1">Complexity</dt>
+                <dd>
+                  <Badge
+                    className={`${
+                      complexityColors[blueprint.complexity] || "bg-gray-100 text-gray-700"
+                    } border-0 text-xs font-semibold`}
+                  >
+                    {blueprint.complexity}
+                  </Badge>
+                </dd>
+              </div>
 
-          {/* Technical Details Section */}
-          <section className="bg-white border border-gray-200 rounded-xl p-8 mb-6" aria-labelledby="technologies-heading">
-            <h2 id="technologies-heading" className="text-2xl font-bold text-primary-navy mb-4">
-              Key Technologies
-            </h2>
-            <ul className="flex flex-wrap gap-3" aria-label="List of key technologies">
-              {blueprint.keyTechnologies.map((tech, index) => (
-                <li
-                  key={index}
-                  className="bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2 rounded-lg text-sm font-medium"
+              {/* Industry Focus / Deployment Target */}
+              {isSolutionSpec ? (
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Industry Focus
+                  </dt>
+                  <dd className="text-sm text-gray-900 font-medium">{spec.industryFocus}</dd>
+                </div>
+              ) : (
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Deployment Target
+                  </dt>
+                  <dd className="text-sm text-gray-900 font-medium">{build.deploymentTarget}</dd>
+                </div>
+              )}
+
+              {/* Deployment Model / Implementation Time */}
+              {isSolutionSpec ? (
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Deployment Model
+                  </dt>
+                  <dd className="text-sm text-gray-900 font-medium">{spec.deploymentModel}</dd>
+                </div>
+              ) : (
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Implementation Time
+                  </dt>
+                  <dd className="text-sm text-gray-900 font-medium">
+                    {build.implementationTime}
+                  </dd>
+                </div>
+              )}
+            </div>
+
+            {/* Key Technologies */}
+            <div>
+              <dt className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                Key Technologies
+              </dt>
+              <dd className="flex flex-wrap gap-2">
+                {blueprint.keyTechnologies.map((tech, index) => (
+                  <span
+                    key={index}
+                    className="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-lg text-xs font-medium"
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          </div>
+
+          {/* ─── 5 Content Tabs ──────────────────────────────────────────────── */}
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-8">
+            {/* Tab Bar */}
+            <div
+              className="flex border-b border-gray-200 overflow-x-auto"
+              role="tablist"
+              aria-label="Blueprint detail tabs"
+            >
+              {CONTENT_TABS.map((t) => (
+                <button
+                  key={t.key}
+                  role="tab"
+                  aria-selected={activeTab === t.key}
+                  aria-controls={`tabpanel-${t.key}`}
+                  id={`tab-${t.key}`}
+                  onClick={() => setActiveTab(t.key)}
+                  className={`flex items-center gap-2 px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset ${
+                    activeTab === t.key
+                      ? "border-b-2 border-blue-600 text-blue-600"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
                 >
-                  {tech}
-                </li>
+                  {t.icon}
+                  {t.label}
+                </button>
               ))}
-            </ul>
-          </section>
+            </div>
 
-          {/* Architecture Section */}
-          {isSolutionSpec && (
-            <section className="bg-white border border-gray-200 rounded-xl p-8 mb-6" aria-labelledby="architecture-heading">
-              <h2 id="architecture-heading" className="text-2xl font-bold text-primary-navy mb-4">
-                Architecture & Components
-              </h2>
-              <ul className="space-y-4" aria-label="Architecture features">
-                {spec.includesDiagrams && (
-                  <li className="flex items-center gap-3 text-gray-700">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true"></div>
-                    <span className="text-base">
-                      Comprehensive architecture diagrams included
-                    </span>
-                  </li>
-                )}
-                {spec.includesComponents && (
-                  <li className="flex items-center gap-3 text-gray-700">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true"></div>
-                    <span className="text-base">
-                      {blueprint.componentCount} components documented
-                    </span>
-                  </li>
-                )}
-              </ul>
-            </section>
-          )}
+            {/* Tab Content */}
+            <div
+              role="tabpanel"
+              id={`tabpanel-${activeTab}`}
+              aria-labelledby={`tab-${activeTab}`}
+              className="p-8"
+            >
+              {renderActiveTabContent()}
+            </div>
+          </div>
 
-          {/* Implementation Section (Solution Build only) */}
-          {!isSolutionSpec && (
-            <section className="bg-white border border-gray-200 rounded-xl p-8 mb-6" aria-labelledby="implementation-heading">
-              <h2 id="implementation-heading" className="text-2xl font-bold text-primary-navy mb-4">
-                Implementation Details
-              </h2>
-              <div className="space-y-4">
-                {build.includesAutomation.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">
-                      Automation Tools Included
-                    </h3>
-                    <ul className="flex flex-wrap gap-2" aria-label="Automation tools">
-                      {build.includesAutomation.map((tool, index) => (
-                        <li
-                          key={index}
-                          className="bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded text-sm"
-                        >
-                          {tool}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {build.includesCodeSamples && (
-                  <div className="flex items-center gap-3 text-gray-700">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true"></div>
-                    <span className="text-base">Code samples and examples included</span>
-                  </div>
-                )}
-                {blueprint.componentCount > 0 && (
-                  <div className="flex items-center gap-3 text-gray-700">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true"></div>
-                    <span className="text-base">
-                      {blueprint.componentCount} implementation components
-                    </span>
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* CTA Section */}
-          <section className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-8" aria-labelledby="cta-heading">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* ─── CTA Section ─────────────────────────────────────────────────── */}
+          <section className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-8">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               <div>
-                <h2 id="cta-heading" className="text-xl font-bold text-primary-navy mb-2">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">
                   Ready to get started?
                 </h2>
                 <p className="text-gray-600">
-                  Download this blueprint to access all documentation and resources.
+                  Access the full blueprint including all documentation, diagrams, and implementation guides.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <button
-                  onClick={handleBackClick}
-                  className="flex items-center justify-center gap-2 border-2 border-[hsl(var(--orange))] text-[hsl(var(--orange))] hover:bg-[hsl(var(--orange)/0.05)] px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 hover:shadow-lg min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2"
-                  aria-label="Go back to blueprints marketplace"
-                >
-                  <ArrowLeft size={18} aria-hidden="true" />
-                  Back to Blueprints
-                </button>
-                <button 
-                  className="flex items-center justify-center gap-2 bg-[hsl(var(--orange))] text-white hover:bg-[hsl(var(--orange-hover))] px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 hover:shadow-lg min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2"
-                  aria-label={`Download ${blueprint.title} blueprint`}
-                >
-                  <Download size={18} aria-hidden="true" />
-                  Download Blueprint
-                </button>
-              </div>
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              >
+                <Lock size={18} />
+                Access Full Blueprint
+              </button>
             </div>
           </section>
-          </article>
         </div>
       </main>
 
       <Footer />
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        context={{
+          marketplace: "blueprints",
+          tab: tab || "solution-specs",
+          cardId: blueprint.id,
+          serviceName: blueprint.title,
+          action: "access",
+        }}
+      />
     </div>
   );
 }

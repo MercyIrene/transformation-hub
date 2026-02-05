@@ -1,216 +1,275 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { SlidersHorizontal } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { MarketplaceHeader } from "@/components/blueprints/MarketplaceHeader";
-import { BlueprintCard } from "@/components/blueprints/BlueprintCard";
+import { BlueprintCard, MarketplaceHeader } from "@/components/blueprints";
+import { LoginModal } from "@/components/learningCenter";
 import { SearchBar } from "@/components/learningCenter/SearchBar";
-import { FilterPanel, MobileFilterButton } from "@/components/learningCenter/FilterPanel";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import {
-  solutionSpecs,
-  solutionBuilds,
+  FilterPanel,
+  MobileFilterButton,
+} from "@/components/learningCenter/FilterPanel";
+import { solutionSpecs, type SolutionSpec } from "@/data/blueprints/solutionSpecs";
+import { solutionBuilds, type SolutionBuild } from "@/data/blueprints/solutionBuilds";
+import {
   solutionSpecsFilters,
   solutionBuildFilters,
-  type SolutionSpec,
-  type SolutionBuild,
-} from "@/data/blueprints";
+} from "@/data/blueprints/filters";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 type TabValue = "solution-specs" | "solution-build";
 
+interface TabConfig {
+  value: TabValue;
+  label: string;
+  shortLabel: string;
+  phaseBadge: string;
+  phaseBadgeClass: string;
+  count: number;
+}
+
+interface LoginContext {
+  marketplace: string;
+  tab: string;
+  cardId: string;
+  serviceName: string;
+  action: string;
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const DEBOUNCE_DELAY = 300;
+
+const TABS: TabConfig[] = [
+  {
+    value: "solution-specs",
+    label: "Blueprint-led Solution Specs",
+    shortLabel: "Solution Specs",
+    phaseBadge: "Design",
+    phaseBadgeClass: "badge-design",
+    count: 25,
+  },
+  {
+    value: "solution-build",
+    label: "Solutions Blueprints Build",
+    shortLabel: "Solution Build",
+    phaseBadge: "Deploy",
+    phaseBadgeClass: "badge-deploy",
+    count: 14,
+  },
+];
+
+const SEARCH_PLACEHOLDERS: Record<TabValue, string> = {
+  "solution-specs": "Search solution blueprints or platforms...",
+  "solution-build": "Search implementation guides or technologies...",
+};
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export default function BlueprintsPage() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  
-  // Get active tab from URL or default to solution-specs
-  // Handle invalid tab parameters by defaulting to 'solution-specs'
-  const tabParam = searchParams.get("tab");
-  const activeTab: TabValue = tabParam === "solution-build" ? "solution-build" : "solution-specs";
-  
-  // State management
+
+  // --- State ---------------------------------------------------------------
+  const [activeTab, setActiveTab] = useState<TabValue>("solution-specs");
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
-  // Debounce search query with 300ms delay
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [loginModal, setLoginModal] = useState<{
+    open: boolean;
+    context: LoginContext;
+  }>({
+    open: false,
+    context: {
+      marketplace: "blueprints",
+      tab: "solution-specs",
+      cardId: "",
+      serviceName: "",
+      action: "View Blueprint",
+    },
+  });
+
+  // --- Debounced search ----------------------------------------------------
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
-    // Clear existing timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    
-    // Set new timer
-    debounceTimerRef.current = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 300);
-    
-    // Cleanup on unmount
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, DEBOUNCE_DELAY);
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [searchQuery]);
 
-  // Get current data and filters based on active tab
-  const currentData = activeTab === "solution-specs" ? solutionSpecs : solutionBuilds;
-  const currentFilters = activeTab === "solution-specs" ? solutionSpecsFilters : solutionBuildFilters;
+  // --- Derived data based on active tab ------------------------------------
+  const currentData: (SolutionSpec | SolutionBuild)[] =
+    activeTab === "solution-specs" ? solutionSpecs : solutionBuilds;
 
-  // Tab change handler that resets filters
-  const handleTabChange = (value: string) => {
-    setSearchParams({ tab: value });
+  const currentFilters =
+    activeTab === "solution-specs" ? solutionSpecsFilters : solutionBuildFilters;
+
+  // --- Active filter count -------------------------------------------------
+  const activeFilterCount = useMemo(
+    () => Object.values(selectedFilters).reduce((sum, arr) => sum + arr.length, 0),
+    [selectedFilters]
+  );
+
+  // --- Tab switch handler (resets filters + search) ------------------------
+  const handleTabChange = useCallback((tab: TabValue) => {
+    setActiveTab(tab);
     setSelectedFilters({});
-  };
+    setSearchQuery("");
+    setDebouncedSearch("");
+  }, []);
 
-  // Filter change handler
-  const handleFilterChange = (group: string, value: string) => {
+  // --- Filter handlers -----------------------------------------------------
+  const handleFilterChange = useCallback((group: string, value: string) => {
     setSelectedFilters((prev) => {
-      const groupFilters = prev[group] || [];
-      const isSelected = groupFilters.includes(value);
-      
-      return {
-        ...prev,
-        [group]: isSelected
-          ? groupFilters.filter((v) => v !== value)
-          : [...groupFilters, value],
-      };
+      const current = prev[group] || [];
+      const next = current.includes(value)
+        ? current.filter((v) => v !== value)
+        : [...current, value];
+      return { ...prev, [group]: next };
     });
-  };
+  }, []);
 
-  // Clear all filters and search query
   const handleClearFilters = useCallback(() => {
     setSelectedFilters({});
     setSearchQuery("");
+    setDebouncedSearch("");
   }, []);
 
-  // Memoize filter application logic for better performance
-  const applyFilters = useCallback((
-    results: (SolutionSpec | SolutionBuild)[],
-    filters: Record<string, string[]>
-  ) => {
-    let filtered = results;
-    
-    Object.entries(filters).forEach(([group, values]) => {
-      if (values.length > 0) {
-        filtered = filtered.filter((blueprint: SolutionSpec | SolutionBuild) => {
-          // Handle different filter types
-          if (group === "solutionType") {
-            return values.some((v) => blueprint.solutionType.includes(v.split(" - ")[0]));
-          }
-          if (group === "blueprintScope") {
-            return values.includes((blueprint as SolutionSpec).scope);
-          }
-          if (group === "maturityLevel") {
-            return values.includes((blueprint as SolutionSpec).maturityLevel);
-          }
-          if (group === "industryFocus") {
-            return values.includes((blueprint as SolutionSpec).industryFocus);
-          }
-          if (group === "technicalComplexity") {
-            return values.includes(blueprint.complexity);
-          }
-          if (group === "deploymentModel") {
-            return values.includes((blueprint as SolutionSpec).deploymentModel);
-          }
-          if (group === "includesDiagrams") {
-            const spec = blueprint as SolutionSpec;
-            if (values.includes("Yes - Comprehensive") || values.includes("Yes - Basic")) {
-              return spec.includesDiagrams;
+  // --- Filter logic (memoised) ---------------------------------------------
+  const applyFilters = useCallback(
+    (
+      results: (SolutionSpec | SolutionBuild)[],
+      filters: Record<string, string[]>
+    ) => {
+      let filtered = results;
+
+      Object.entries(filters).forEach(([group, values]) => {
+        if (values.length === 0) return;
+
+        filtered = filtered.filter((bp) => {
+          switch (group) {
+            case "solutionType":
+              return values.some((v) => bp.solutionType.includes(v.split(" - ")[0]));
+            case "blueprintScope":
+              return values.includes((bp as SolutionSpec).scope);
+            case "maturityLevel":
+              return values.includes((bp as SolutionSpec).maturityLevel);
+            case "industryFocus":
+              return values.includes((bp as SolutionSpec).industryFocus);
+            case "technicalComplexity":
+              return values.includes(bp.complexity);
+            case "deploymentModel":
+              return values.includes((bp as SolutionSpec).deploymentModel);
+            case "includesDiagrams": {
+              const spec = bp as SolutionSpec;
+              if (values.includes("Yes - Comprehensive") || values.includes("Yes - Basic"))
+                return spec.includesDiagrams;
+              if (values.includes("No")) return !spec.includesDiagrams;
+              return true;
             }
-            if (values.includes("No")) {
-              return !spec.includesDiagrams;
+            case "includesComponentList": {
+              const spec = bp as SolutionSpec;
+              if (values.includes("Yes")) return spec.includesComponents;
+              if (values.includes("No")) return !spec.includesComponents;
+              return true;
             }
-          }
-          if (group === "includesComponentList") {
-            const spec = blueprint as SolutionSpec;
-            if (values.includes("Yes")) {
-              return spec.includesComponents;
+            case "buildComplexity":
+              return values.includes((bp as SolutionBuild).buildComplexity);
+            case "technologyStack":
+              return values.includes((bp as SolutionBuild).technologyStack);
+            case "deploymentTarget":
+              return values.includes((bp as SolutionBuild).deploymentTarget);
+            case "includesAutomation": {
+              const build = bp as SolutionBuild;
+              if (values.includes("All")) return build.includesAutomation.length >= 3;
+              if (values.includes("None")) return build.includesAutomation.length === 0;
+              return values.some((v) => build.includesAutomation.includes(v));
             }
-            if (values.includes("No")) {
-              return !spec.includesComponents;
+            case "includesCodeSamples": {
+              const build = bp as SolutionBuild;
+              if (values.includes("Yes - Extensive") || values.includes("Yes - Limited"))
+                return build.includesCodeSamples;
+              if (values.includes("No")) return !build.includesCodeSamples;
+              return true;
             }
+            case "implementationTime":
+              return values.includes((bp as SolutionBuild).implementationTime);
+            case "skillLevel":
+              return values.includes((bp as SolutionBuild).skillLevel);
+            default:
+              return true;
           }
-          if (group === "buildComplexity") {
-            return values.includes((blueprint as SolutionBuild).buildComplexity);
-          }
-          if (group === "technologyStack") {
-            return values.includes((blueprint as SolutionBuild).technologyStack);
-          }
-          if (group === "deploymentTarget") {
-            return values.includes((blueprint as SolutionBuild).deploymentTarget);
-          }
-          if (group === "includesAutomation") {
-            const build = blueprint as SolutionBuild;
-            if (values.includes("All")) {
-              return build.includesAutomation.length >= 3;
-            }
-            if (values.includes("None")) {
-              return build.includesAutomation.length === 0;
-            }
-            return values.some((v) => build.includesAutomation.includes(v));
-          }
-          if (group === "includesCodeSamples") {
-            const build = blueprint as SolutionBuild;
-            if (values.includes("Yes - Extensive") || values.includes("Yes - Limited")) {
-              return build.includesCodeSamples;
-            }
-            if (values.includes("No")) {
-              return !build.includesCodeSamples;
-            }
-          }
-          if (group === "implementationTime") {
-            return values.includes((blueprint as SolutionBuild).implementationTime);
-          }
-          if (group === "skillLevel") {
-            return values.includes((blueprint as SolutionBuild).skillLevel);
-          }
-          return true;
         });
-      }
-    });
-    
-    return filtered;
-  }, []);
+      });
 
-  // Filter and search logic - optimized with debounced search
+      return filtered;
+    },
+    []
+  );
+
   const filteredBlueprints = useMemo(() => {
     let results: (SolutionSpec | SolutionBuild)[] = currentData;
 
-    // Apply search filter using debounced query
-    if (debouncedSearchQuery.trim()) {
-      const query = debouncedSearchQuery.toLowerCase();
-      results = results.filter((blueprint) => {
-        const matchesTitle = blueprint.title.toLowerCase().includes(query);
-        const matchesDescription = blueprint.description.toLowerCase().includes(query);
-        const matchesTechnologies = blueprint.keyTechnologies.some((tech) =>
-          tech.toLowerCase().includes(query)
-        );
-        return matchesTitle || matchesDescription || matchesTechnologies;
-      });
+    // Text search (debounced)
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
+      results = results.filter(
+        (bp) =>
+          bp.title.toLowerCase().includes(q) ||
+          bp.description.toLowerCase().includes(q) ||
+          bp.keyTechnologies.some((t) => t.toLowerCase().includes(q))
+      );
     }
 
-    // Apply selected filters using memoized function
+    // Checkbox filters
     results = applyFilters(results, selectedFilters);
 
     return results;
-  }, [currentData, debouncedSearchQuery, selectedFilters, applyFilters]);
+  }, [currentData, debouncedSearch, selectedFilters, applyFilters]);
 
-  // Handle blueprint card click - memoized
-  const handleBlueprintClick = useCallback((blueprintId: string) => {
-    navigate(`/marketplaces/blueprints/${activeTab}/${blueprintId}`);
-  }, [navigate, activeTab]);
+  // --- Card click -> navigate to detail page -------------------------------
+  const handleBlueprintClick = useCallback(
+    (blueprintId: string) => {
+      navigate(`/marketplaces/blueprints/${activeTab}/${blueprintId}`);
+    },
+    [navigate, activeTab]
+  );
 
-  // Dynamic search placeholder
-  const searchPlaceholder =
-    activeTab === "solution-specs"
-      ? "Search solution blueprints or platforms..."
-      : "Search implementation guides or technologies...";
+  // --- "View Blueprint" CTA -> login modal then redirect -------------------
+  const handleViewBlueprint = useCallback(
+    (blueprint: SolutionSpec | SolutionBuild) => {
+      setLoginModal({
+        open: true,
+        context: {
+          marketplace: "blueprints",
+          tab: activeTab,
+          cardId: blueprint.id,
+          serviceName: blueprint.title,
+          action: "View Blueprint",
+        },
+      });
+    },
+    [activeTab]
+  );
 
+  const closeLoginModal = useCallback(() => {
+    setLoginModal((prev) => ({ ...prev, open: false }));
+  }, []);
+
+  // --- Render --------------------------------------------------------------
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
@@ -218,126 +277,153 @@ export default function BlueprintsPage() {
 
       <main className="flex-1" id="main-content">
         <div className="max-w-7xl mx-auto px-4 py-12">
-          {/* Tabs Navigation */}
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
-            <TabsList 
-              className="w-full justify-start bg-white border border-gray-200 rounded-lg p-1 h-auto"
-              aria-label="Blueprint categories"
-            >
-              <TabsTrigger
-                value="solution-specs"
-                className="flex-1 lg:flex-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--orange))] rounded-none px-6 py-3 min-h-[44px]"
-                aria-label="Blueprint-led Solution Specs, Design phase, 25 blueprints"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline">Blueprint-led Solution Specs</span>
-                  <span className="sm:hidden">Solution Specs</span>
-                  <Badge className="badge-design border-0 text-xs" aria-label="Design phase">
-                    Design
-                  </Badge>
-                  <Badge className="bg-gray-100 text-gray-700 border-0 text-xs font-semibold" aria-label="25 blueprints">
-                    25
-                  </Badge>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger
-                value="solution-build"
-                className="flex-1 lg:flex-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[hsl(var(--orange))] rounded-none px-6 py-3 min-h-[44px]"
-                aria-label="Solutions Blueprints Build, Deploy phase, 14 blueprints"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline">Solutions Blueprints Build</span>
-                  <span className="sm:hidden">Solution Build</span>
-                  <Badge className="badge-deploy border-0 text-xs" aria-label="Deploy phase">
-                    Deploy
-                  </Badge>
-                  <Badge className="bg-gray-100 text-gray-700 border-0 text-xs font-semibold" aria-label="14 blueprints">
-                    14
-                  </Badge>
-                </div>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value={activeTab} className="mt-6">
-              <div className="flex gap-6">
-                {/* Filter Panel */}
-                <FilterPanel
-                  filters={currentFilters}
-                  selectedFilters={selectedFilters}
-                  onFilterChange={handleFilterChange}
-                  onClearAll={handleClearFilters}
-                  isOpen={isFilterOpen}
-                  onClose={() => setIsFilterOpen(false)}
-                />
-
-                {/* Main Content */}
-                <div className="flex-1">
-                  {/* Search Bar */}
-                  <div className="mb-6">
-                    <SearchBar
-                      value={searchQuery}
-                      onChange={setSearchQuery}
-                      placeholder={searchPlaceholder}
-                    />
-                  </div>
-
-                  {/* Result Count */}
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600" role="status" aria-live="polite" aria-atomic="true">
-                      {filteredBlueprints.length} {filteredBlueprints.length === 1 ? "blueprint" : "blueprints"} found
-                    </p>
-                  </div>
-
-                  {/* Blueprints Grid */}
-                  {filteredBlueprints.length > 0 ? (
-                    <div 
-                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                      role="list"
-                      aria-label="Blueprint cards"
+          {/* ── Tabs ── */}
+          <div
+            className="flex border-b border-gray-200 mb-6"
+            role="tablist"
+            aria-label="Blueprint categories"
+          >
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  role="tab"
+                  id={`tab-${tab.value}`}
+                  aria-selected={isActive}
+                  aria-controls={`panel-${tab.value}`}
+                  onClick={() => handleTabChange(tab.value)}
+                  className={`px-6 py-4 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset ${
+                    isActive
+                      ? "border-b-2 border-blue-600 text-blue-600"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    {/* Full label on desktop, short on mobile */}
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="sm:hidden">{tab.shortLabel}</span>
+                    <span
+                      className={`${tab.phaseBadgeClass} inline-block px-2 py-0.5 rounded-full text-xs font-semibold border-0`}
                     >
-                      {filteredBlueprints.map((blueprint) => (
-                        <BlueprintCard
-                          key={blueprint.id}
-                          blueprint={blueprint}
-                          onClick={() => handleBlueprintClick(blueprint.id)}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div 
-                      className="bg-white border-2 border-gray-200 rounded-xl p-12 text-center"
-                      role="status"
-                      aria-live="polite"
-                    >
-                      <div className="max-w-md mx-auto">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4" aria-hidden="true">
-                          <SlidersHorizontal className="text-gray-400" size={32} />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                          No blueprints match your criteria
-                        </h3>
-                        <p className="text-gray-600 mb-6">
-                          Try adjusting your filters or search query to find what you're looking for.
-                        </p>
-                        <button
-                          onClick={handleClearFilters}
-                          className="bg-[hsl(var(--orange))] text-white hover:bg-[hsl(var(--orange-hover))] px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 hover:shadow-lg min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2"
-                          aria-label="Clear all filters and search"
-                        >
-                          Clear all filters
-                        </button>
+                      {tab.phaseBadge}
+                    </span>
+                    <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                      {tab.count}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── Tab Panel ── */}
+          <div
+            role="tabpanel"
+            id={`panel-${activeTab}`}
+            aria-labelledby={`tab-${activeTab}`}
+          >
+            {/* Search */}
+            <div className="mb-6">
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={SEARCH_PLACEHOLDERS[activeTab]}
+              />
+            </div>
+
+            <div className="flex gap-6">
+              {/* ── Filter Panel (sidebar / drawer) ── */}
+              <FilterPanel
+                filters={currentFilters}
+                selectedFilters={selectedFilters}
+                onFilterChange={handleFilterChange}
+                onClearAll={handleClearFilters}
+                isOpen={mobileFilterOpen}
+                onClose={() => setMobileFilterOpen(false)}
+              />
+
+              {/* ── Main Content ── */}
+              <div className="flex-1">
+                {/* Result count */}
+                <div className="mb-4">
+                  <p
+                    className="text-sm text-gray-600"
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
+                    {filteredBlueprints.length}{" "}
+                    {filteredBlueprints.length === 1 ? "blueprint" : "blueprints"} found
+                    {activeFilterCount > 0 && (
+                      <span className="ml-1 text-gray-400">
+                        ({activeFilterCount} {activeFilterCount === 1 ? "filter" : "filters"} active)
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                {/* Cards grid */}
+                {filteredBlueprints.length > 0 ? (
+                  <div
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                    role="list"
+                    aria-label="Blueprint cards"
+                  >
+                    {filteredBlueprints.map((blueprint) => (
+                      <BlueprintCard
+                        key={blueprint.id}
+                        blueprint={blueprint}
+                        onClick={() => handleBlueprintClick(blueprint.id)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  /* ── Empty State ── */
+                  <div
+                    className="bg-white border-2 border-gray-200 rounded-xl p-12 text-center"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <div className="max-w-md mx-auto">
+                      <div
+                        className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                        aria-hidden="true"
+                      >
+                        <SlidersHorizontal className="text-gray-400" size={32} />
                       </div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                        No blueprints match your criteria
+                      </h3>
+                      <p className="text-gray-600 mb-6">
+                        Try adjusting your filters or search query to find what
+                        you're looking for.
+                      </p>
+                      <button
+                        onClick={handleClearFilters}
+                        className="bg-[hsl(var(--orange))] text-white hover:bg-[hsl(var(--orange-hover))] px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 hover:shadow-lg min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--orange))] focus:ring-offset-2"
+                        aria-label="Clear all filters and search"
+                      >
+                        Clear all filters
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
         </div>
       </main>
 
-      {/* Mobile Filter Button */}
-      <MobileFilterButton onClick={() => setIsFilterOpen(true)} />
+      {/* Mobile floating filter button */}
+      <MobileFilterButton onClick={() => setMobileFilterOpen(true)} />
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={loginModal.open}
+        onClose={closeLoginModal}
+        context={loginModal.context}
+      />
 
       <Footer />
     </div>

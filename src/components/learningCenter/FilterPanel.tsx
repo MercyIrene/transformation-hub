@@ -44,6 +44,17 @@ const filterLabels: Record<string, string> = {
   includesCodeSamples: "Includes Code Samples",
   implementationTime: "Implementation Time",
   skillLevel: "Skill Level",
+  // Support Services-specific filters
+  supportType: "Support Type",
+  slaLevel: "SLA Level",
+  coverageArea: "Coverage Area",
+  responseTime: "Response Time",
+  teamSize: "Team Size",
+  expertiseArea: "Expertise Area",
+  consultancyType: "Consultancy Type",
+  experienceLevel: "Experience Level",
+  engagementDuration: "Engagement Duration",
+  industrySpecialization: "Industry Specialization",
 };
 
 export function FilterPanel({
