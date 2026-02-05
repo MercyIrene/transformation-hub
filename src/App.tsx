@@ -15,6 +15,8 @@ import TemplatesPage from "./pages/TemplatesPage";
 import TemplatesDetailPage from "./pages/TemplatesDetailPage";
 import BlueprintsPage from "./pages/BlueprintsPage";
 import BlueprintDetailPage from "./pages/BlueprintDetailPage";
+import PortfolioManagementPage from "./pages/PortfolioManagementPage";
+import PortfolioDetailPage from "./pages/PortfolioDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,9 +59,12 @@ const App = () => (
           <Route path="/marketplaces/blueprints" element={<BlueprintsPage />} />
           <Route path="/marketplaces/blueprints/:tab/:blueprintId" element={<BlueprintDetailPage />} />
           
+          {/* Portfolio Management marketplace */}
+          <Route path="/marketplaces/portfolio-management" element={<PortfolioManagementPage />} />
+          <Route path="/marketplaces/portfolio-management/:type/:id" element={<PortfolioDetailPage />} />
+          
           {/* Marketplace routes */}
           <Route path="/marketplaces/lifecycle-management" element={<ComingSoonPage pageName="Lifecycle Management" />} />
-          <Route path="/marketplaces/portfolio-management" element={<ComingSoonPage pageName="Portfolio Management" />} />
           <Route path="/marketplaces/digital-intelligence" element={<ComingSoonPage pageName="Digital Intelligence" />} />
           <Route path="/marketplaces/support-services" element={<ComingSoonPage pageName="Support Services" />} />
           
