@@ -11,12 +11,14 @@ import LearningCenterDetailPage from "./pages/LearningCenterDetailPage";
 import KnowledgeCenterPage from "./pages/KnowledgeCenterPage";
 import KnowledgeCenterDetailPage from "./pages/KnowledgeCenterDetailPage";
 import TransactAppPage from "./pages/TransactAppPage";
+import Stage2AppPage from "./pages/Stage2AppPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import TemplatesDetailPage from "./pages/TemplatesDetailPage";
 import BlueprintsPage from "./pages/BlueprintsPage";
 import BlueprintDetailPage from "./pages/BlueprintDetailPage";
 import PortfolioManagementPage from "./pages/PortfolioManagementPage";
 import PortfolioDetailPage from "./pages/PortfolioDetailPage";
+// import PortfolioTestPage from "./pages/PortfolioTestPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,7 @@ const App = () => (
           
           {/* Stage 2 - Transact App */}
           <Route path="/transact-app" element={<TransactAppPage />} />
+          <Route path="/stage2" element={<Stage2AppPage />} />
           
           {/* Main platform routes */}
           <Route path="/dbp" element={<ComingSoonPage pageName="DBP" />} />
@@ -59,9 +62,13 @@ const App = () => (
           <Route path="/marketplaces/blueprints" element={<BlueprintsPage />} />
           <Route path="/marketplaces/blueprints/:tab/:blueprintId" element={<BlueprintDetailPage />} />
           
+          {/* Portfolio Management marketplace - Temporarily disabled */}
+          {/* <Route path="/marketplaces/portfolio-management" element={<PortfolioManagementPage />} />
+          <Route path="/marketplaces/portfolio-management/:tab/:cardId" element={<PortfolioDetailPage />} /> */}
+          
           {/* Portfolio Management marketplace */}
           <Route path="/marketplaces/portfolio-management" element={<PortfolioManagementPage />} />
-          <Route path="/marketplaces/portfolio-management/:type/:id" element={<PortfolioDetailPage />} />
+          <Route path="/marketplaces/portfolio-management/:tab/:cardId" element={<PortfolioDetailPage />} />
           
           {/* Marketplace routes */}
           <Route path="/marketplaces/lifecycle-management" element={<ComingSoonPage pageName="Lifecycle Management" />} />

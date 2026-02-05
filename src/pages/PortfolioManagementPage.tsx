@@ -1,206 +1,250 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { ChevronRight, Briefcase, TrendingUp, AppWindow, FolderKanban } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { PortfolioHeader, FilterPanel, ApplicationCard, ProjectCard } from "@/components/portfolio";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  LayoutGrid, 
-  List, 
-  Download,
-  Plus,
-  Building2,
-  FolderKanban
-} from "lucide-react";
-import { applications, projects, Application, Project } from "@/data/portfolio";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { PortfolioCard } from "@/components/portfolio/PortfolioCard";
+import { FilterPanel } from "@/components/learningCenter/FilterPanel";
+import { SearchBar } from "@/components/learningCenter/SearchBar";
+import { applicationPortfolio, projectPortfolio, portfolioFilters, portfolioStats } from "@/data/portfolio";
 
-const PortfolioManagementPage = () => {
+type TabType = "application-portfolio" | "project-portfolio";
+
+const tabPlaceholders: Record<TabType, string> = {
+  "application-portfolio": "Search application services or categories...",
+  "project-portfolio": "Search project services or types...",
+};
+
+export default function PortfolioManagementPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("applications");
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [applicationFilters, setApplicationFilters] = useState<any>({});
-  const [projectFilters, setProjectFilters] = useState<any>({});
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get("tab") as TabType) || "application-portfolio";
+  
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
 
-  // Filter applications
-  const filteredApplications = useMemo(() => {
-    return applications.filter((app) => {
-      const matchesSearch = !applicationFilters.searchTerm || 
-        app.name.toLowerCase().includes(applicationFilters.searchTerm.toLowerCase()) ||
-        app.description.toLowerCase().includes(applicationFilters.searchTerm.toLowerCase());
-      
-      const matchesCategory = !applicationFilters.category || 
-        app.category === applicationFilters.category;
-      
-      const matchesStatus = !applicationFilters.status || 
-        app.status === applicationFilters.status;
-      
-      const matchesHealthScore = !applicationFilters.healthScoreRange || 
-        (app.healthScore >= applicationFilters.healthScoreRange[0] && 
-         app.healthScore <= applicationFilters.healthScoreRange[1]);
-
-      return matchesSearch && matchesCategory && matchesStatus && matchesHealthScore;
-    });
-  }, [applications, applicationFilters]);
-
-  // Filter projects
-  const filteredProjects = useMemo(() => {
-    return projects.filter((project) => {
-      const matchesSearch = !projectFilters.searchTerm || 
-        project.name.toLowerCase().includes(projectFilters.searchTerm.toLowerCase()) ||
-        project.description.toLowerCase().includes(projectFilters.searchTerm.toLowerCase());
-      
-      const matchesCategory = !projectFilters.category || 
-        project.category === projectFilters.category;
-      
-      const matchesStatus = !projectFilters.status || 
-        project.status === projectFilters.status;
-      
-      const matchesPriority = !projectFilters.priority || 
-        project.priority === projectFilters.priority;
-      
-      const matchesProgress = !projectFilters.progressRange || 
-        (project.progress >= projectFilters.progressRange[0] && 
-         project.progress <= projectFilters.progressRange[1]);
-
-      return matchesSearch && matchesCategory && matchesStatus && matchesPriority && matchesProgress;
-    });
-  }, [projects, projectFilters]);
-
-  const handleApplicationClick = (application: Application) => {
-    navigate(`/marketplaces/portfolio-management/applications/${application.id}`);
+  const handleTabChange = (value: string) => {
+    const tab = value as TabType;
+    setActiveTab(tab);
+    setSearchParams({ tab });
+    setSelectedFilters({});
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleProjectClick = (project: Project) => {
-    navigate(`/marketplaces/portfolio-management/projects/${project.id}`);
+  const handleFilterChange = (group: string, value: string) => {
+    setSelectedFilters((prev) => {
+      const current = prev[group] || [];
+      const updated = current.includes(value)
+        ? current.filter((v) => v !== value)
+        : [...current, value];
+      return { ...prev, [group]: updated };
+    });
+  };
+
+  const clearAllFilters = () => {
+    setSelectedFilters({});
+  };
+
+  // Get current services and filters based on active tab
+  const currentServices = activeTab === "application-portfolio" ? applicationPortfolio : projectPortfolio;
+  const currentFilters = activeTab === "application-portfolio" ? portfolioFilters.application : portfolioFilters.project;
+
+  // Apply filters and search
+  const filteredServices = currentServices.filter((service) => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        service.title.toLowerCase().includes(query) ||
+        service.description.toLowerCase().includes(query) ||
+        service.category.toLowerCase().includes(query) ||
+        service.keyMetrics.some(metric => metric.toLowerCase().includes(query));
+      if (!matchesSearch) return false;
+    }
+
+    // Apply selected filters
+    for (const [filterGroup, selectedValues] of Object.entries(selectedFilters)) {
+      if (selectedValues.length > 0) {
+        const serviceValue = (service as any)[filterGroup];
+        if (!selectedValues.includes(serviceValue)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  });
+
+  const getResultLabel = () => {
+    switch (activeTab) {
+      case "application-portfolio":
+        return "application services";
+      case "project-portfolio":
+        return "project services";
+      default:
+        return "services";
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background">
       <Header />
-      
-      <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <PortfolioHeader />
-          
-          <div className="mt-8">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <div className="flex items-center justify-between">
-                <TabsList className="grid w-fit grid-cols-2">
-                  <TabsTrigger value="applications" className="flex items-center gap-2">
-                    <Building2 size={16} />
-                    Applications
-                    <Badge variant="secondary" className="ml-1">
-                      {filteredApplications.length}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger value="projects" className="flex items-center gap-2">
-                    <FolderKanban size={16} />
-                    Projects
-                    <Badge variant="secondary" className="ml-1">
-                      {filteredProjects.length}
-                    </Badge>
-                  </TabsTrigger>
-                </TabsList>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                  >
-                    {viewMode === 'grid' ? <List size={16} /> : <LayoutGrid size={16} />}
-                  </Button>
-                  
-                  <Button variant="outline" size="sm">
-                    <Download size={16} className="mr-2" />
-                    Export
-                  </Button>
-                  
-                  <Button size="sm">
-                    <Plus size={16} className="mr-2" />
-                    Add {activeTab === 'applications' ? 'Application' : 'Project'}
-                  </Button>
-                </div>
-              </div>
+      {/* Marketplace Header */}
+      <section className="bg-gradient-to-b from-orange-50 to-white py-8 lg:py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Breadcrumb */}
+          <nav className="flex items-center text-sm text-muted-foreground mb-4">
+            <Link to="/" className="hover:text-foreground transition-colors">
+              Home
+            </Link>
+            <ChevronRight className="w-4 h-4 mx-2" />
+            <Link to="/marketplaces" className="hover:text-foreground transition-colors">
+              Marketplaces
+            </Link>
+            <ChevronRight className="w-4 h-4 mx-2" />
+            <span className="font-medium text-foreground">Portfolio Management</span>
+          </nav>
 
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Filters Sidebar */}
-                <div className="lg:col-span-1">
-                  <FilterPanel
-                    type={activeTab as 'applications' | 'projects'}
-                    onFiltersChange={activeTab === 'applications' ? setApplicationFilters : setProjectFilters}
-                  />
-                </div>
+          {/* Phase Badge */}
+          <span className="inline-block bg-phase-drive-bg text-phase-drive px-3 py-1 rounded-full text-xs font-semibold uppercase mb-3">
+            Drive
+          </span>
 
-                {/* Content Area */}
-                <div className="lg:col-span-3">
-                  <TabsContent value="applications" className="mt-0">
-                    {filteredApplications.length === 0 ? (
-                      <div className="text-center py-12">
-                        <Building2 size={48} className="mx-auto text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-                          No applications found
-                        </h3>
-                        <p className="text-muted-foreground">
-                          Try adjusting your filters or add a new application.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className={
-                        viewMode === 'grid' 
-                          ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-                          : "space-y-4"
-                      }>
-                        {filteredApplications.map((application) => (
-                          <ApplicationCard
-                            key={application.id}
-                            application={application}
-                            onClick={() => handleApplicationClick(application)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </TabsContent>
+          {/* Title & Description */}
+          <h1 className="text-3xl lg:text-4xl font-bold text-primary-navy mb-3">
+            DTMP Portfolio Management
+          </h1>
+          <p className="text-base lg:text-lg text-muted-foreground max-w-3xl mb-4">
+            Strategic oversight and optimization of application and project portfolios. 
+            Gain visibility into portfolio health, rationalize applications, optimize 
+            TCO, track project delivery, and make data-driven investment decisions.
+          </p>
 
-                  <TabsContent value="projects" className="mt-0">
-                    {filteredProjects.length === 0 ? (
-                      <div className="text-center py-12">
-                        <FolderKanban size={48} className="mx-auto text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-                          No projects found
-                        </h3>
-                        <p className="text-muted-foreground">
-                          Try adjusting your filters or add a new project.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className={
-                        viewMode === 'grid' 
-                          ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-                          : "space-y-4"
-                      }>
-                        {filteredProjects.map((project) => (
-                          <ProjectCard
-                            key={project.id}
-                            project={project}
-                            onClick={() => handleProjectClick(project)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </TabsContent>
-                </div>
-              </div>
-            </Tabs>
+          {/* Stats */}
+          <div className="flex gap-6 text-sm text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <Briefcase className="w-4 h-4" />
+              {portfolioStats.totalServices} Portfolio Services
+            </span>
+            <span className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Real-time Analytics
+            </span>
           </div>
         </div>
-      </main>
-      
+      </section>
+
+      {/* Feature Tabs */}
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <div className="bg-white border-b-2 border-gray-200">
+          <div className="max-w-7xl mx-auto">
+            <TabsList className="h-auto bg-transparent p-0 gap-2 overflow-x-auto flex justify-start px-4 lg:px-8">
+              <TabsTrigger
+                value="application-portfolio"
+                className="flex items-center gap-2 px-6 py-4 text-muted-foreground hover:text-foreground font-medium transition-colors relative rounded-none border-b-2 border-transparent data-[state=active]:border-orange-600 data-[state=active]:text-primary-navy data-[state=active]:shadow-none bg-transparent"
+              >
+                <AppWindow className="w-5 h-5" />
+                <span className="hidden sm:inline">Application Portfolio</span>
+                <span className="sm:hidden">Applications</span>
+                <span className="bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded-full ml-2">
+                  {portfolioStats.applicationServices}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="project-portfolio"
+                className="flex items-center gap-2 px-6 py-4 text-muted-foreground hover:text-foreground font-medium transition-colors relative rounded-none border-b-2 border-transparent data-[state=active]:border-orange-600 data-[state=active]:text-primary-navy data-[state=active]:shadow-none bg-transparent"
+              >
+                <FolderKanban className="w-5 h-5" />
+                <span className="hidden sm:inline">Project Portfolio</span>
+                <span className="sm:hidden">Projects</span>
+                <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded-full ml-2">
+                  {portfolioStats.projectServices}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Filter Panel */}
+            <FilterPanel
+              filters={currentFilters}
+              selectedFilters={selectedFilters}
+              onFilterChange={handleFilterChange}
+              onClearAll={clearAllFilters}
+              isOpen={filterOpen}
+              onToggle={() => setFilterOpen(!filterOpen)}
+            />
+
+            {/* Main Content */}
+            <div className="flex-1">
+              {/* Results Count */}
+              <div className="mb-4 text-sm text-muted-foreground">
+                Showing {filteredServices.length} of {currentServices.length} {getResultLabel()}
+                {searchQuery && ` for "${searchQuery}"`}
+              </div>
+
+              {/* Search Bar */}
+              <SearchBar
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                placeholder={tabPlaceholders[activeTab]}
+              />
+
+              {/* Tab Content */}
+              <TabsContent value="application-portfolio" className="mt-0">
+                {filteredServices.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredServices.map((service) => (
+                      <PortfolioCard key={service.id} service={service} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="max-w-md mx-auto">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        No services found
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        Try adjusting your search or filters to find what you're looking for.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="project-portfolio" className="mt-0">
+                {filteredServices.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredServices.map((service) => (
+                      <PortfolioCard key={service.id} service={service} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="max-w-md mx-auto">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        No services found
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        Try adjusting your search or filters to find what you're looking for.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </div>
+          </div>
+        </div>
+      </Tabs>
+
       <Footer />
     </div>
   );
-};
-
-export default PortfolioManagementPage;
+}

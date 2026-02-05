@@ -1,254 +1,255 @@
-export interface Project {
+import type { LucideIcon } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  Activity, 
+  Users, 
+  DollarSign, 
+  ShieldAlert, 
+  GitBranch, 
+  TrendingUp, 
+  Gauge, 
+  Target, 
+  Inbox, 
+  GitCompare, 
+  CheckCircle, 
+  BookOpen
+} from "lucide-react";
+
+export interface ProjectPortfolioService {
   id: string;
-  name: string;
+  title: string;
   description: string;
+  icon: LucideIcon;
   category: string;
-  status: 'Planning' | 'In Progress' | 'On Hold' | 'Completed' | 'Cancelled';
-  priority: 'Critical' | 'High' | 'Medium' | 'Low';
-  progress: number;
-  startDate: string;
-  endDate: string;
-  budget: {
-    allocated: number;
-    spent: number;
-  };
-  team: {
-    lead: string;
-    size: number;
-  };
-  businessUnit: string;
-  stakeholders: string[];
-  risks: {
-    level: 'High' | 'Medium' | 'Low';
-    count: number;
-  };
-  dependencies: string[];
-  milestones: {
-    name: string;
-    date: string;
-    status: 'Completed' | 'In Progress' | 'Pending';
-  }[];
-  relatedApplications: string[];
+  portfolioType: string;
+  projectPhase: string;
+  deliveryModel: string;
+  updateFrequency: string;
+  complexity: "Low" | "Medium" | "High";
+  realtime: boolean;
+  keyMetrics: string[];
+  reportingLevel: string;
 }
 
-export const projects: Project[] = [
+export const projectPortfolio: ProjectPortfolioService[] = [
   {
-    id: 'proj-001',
-    name: 'Digital Customer Experience Platform',
-    description: 'Modernize customer touchpoints with unified digital experience platform',
-    category: 'Digital Transformation',
-    status: 'In Progress',
-    priority: 'Critical',
-    progress: 65,
-    startDate: '2023-09-01',
-    endDate: '2024-06-30',
-    budget: {
-      allocated: 2500000,
-      spent: 1625000
-    },
-    team: {
-      lead: 'Sarah Johnson',
-      size: 12
-    },
-    businessUnit: 'Customer Success',
-    stakeholders: ['John Smith (CTO)', 'Maria Garcia (VP Customer Success)', 'Alex Thompson (Head of UX)'],
-    risks: {
-      level: 'Medium',
-      count: 3
-    },
-    dependencies: ['Customer Portal Migration', 'API Gateway Implementation'],
-    milestones: [
-      { name: 'Requirements Gathering', date: '2023-10-15', status: 'Completed' },
-      { name: 'Design Phase', date: '2023-12-01', status: 'Completed' },
-      { name: 'Development Phase 1', date: '2024-02-15', status: 'Completed' },
-      { name: 'Development Phase 2', date: '2024-04-30', status: 'In Progress' },
-      { name: 'Testing & QA', date: '2024-05-31', status: 'Pending' },
-      { name: 'Go-Live', date: '2024-06-30', status: 'Pending' }
-    ],
-    relatedApplications: ['app-001']
+    id: "portfolio-dashboard",
+    title: "Executive Portfolio Dashboard",
+    description: "Comprehensive real-time view of all transformation and IT projects with health indicators",
+    icon: LayoutDashboard,
+    category: "Portfolio Dashboard",
+    portfolioType: "All Projects",
+    projectPhase: "All Phases",
+    deliveryModel: "Dashboard",
+    updateFrequency: "Real-time",
+    complexity: "Medium",
+    realtime: true,
+    keyMetrics: ["Portfolio Health", "On-time Delivery %", "Budget Variance", "Resource Utilization"],
+    reportingLevel: "Executive"
   },
   {
-    id: 'proj-002',
-    name: 'ERP System Modernization',
-    description: 'Replace legacy ERP with cloud-native solution',
-    category: 'System Modernization',
-    status: 'Planning',
-    priority: 'Critical',
-    progress: 15,
-    startDate: '2024-03-01',
-    endDate: '2025-12-31',
-    budget: {
-      allocated: 5000000,
-      spent: 250000
-    },
-    team: {
-      lead: 'Michael Chen',
-      size: 18
-    },
-    businessUnit: 'Finance',
-    stakeholders: ['Jennifer Lee (CFO)', 'Robert Taylor (Finance Director)', 'David Kim (IT Director)'],
-    risks: {
-      level: 'High',
-      count: 7
-    },
-    dependencies: ['Data Migration Strategy', 'Change Management Program'],
-    milestones: [
-      { name: 'Vendor Selection', date: '2024-04-15', status: 'In Progress' },
-      { name: 'System Design', date: '2024-06-30', status: 'Pending' },
-      { name: 'Phase 1 Implementation', date: '2024-12-31', status: 'Pending' },
-      { name: 'Phase 2 Implementation', date: '2025-06-30', status: 'Pending' },
-      { name: 'Full Deployment', date: '2025-12-31', status: 'Pending' }
-    ],
-    relatedApplications: ['app-002']
+    id: "project-health-tracking",
+    title: "Project Health Tracking System",
+    description: "Monitor project health across multiple dimensions with predictive alerts",
+    icon: Activity,
+    category: "Project Health Tracking",
+    portfolioType: "All Projects",
+    projectPhase: "Execution",
+    deliveryModel: "Dashboard",
+    updateFrequency: "Daily",
+    complexity: "Medium",
+    realtime: false,
+    keyMetrics: ["Health Score", "Risk Level", "Schedule Status", "Quality Metrics"],
+    reportingLevel: "Project Manager"
   },
   {
-    id: 'proj-003',
-    name: 'AI-Powered Analytics Initiative',
-    description: 'Implement machine learning capabilities across business analytics',
-    category: 'AI/ML',
-    status: 'In Progress',
-    priority: 'High',
-    progress: 40,
-    startDate: '2023-11-01',
-    endDate: '2024-08-31',
-    budget: {
-      allocated: 1800000,
-      spent: 720000
-    },
-    team: {
-      lead: 'Emily Rodriguez',
-      size: 8
-    },
-    businessUnit: 'Product',
-    stakeholders: ['Lisa Wang (VP Product)', 'Dr. James Wilson (Chief Data Officer)'],
-    risks: {
-      level: 'Medium',
-      count: 2
-    },
-    dependencies: ['Data Lake Implementation', 'ML Platform Setup'],
-    milestones: [
-      { name: 'Data Infrastructure', date: '2024-01-31', status: 'Completed' },
-      { name: 'ML Model Development', date: '2024-04-30', status: 'In Progress' },
-      { name: 'Integration Testing', date: '2024-06-30', status: 'Pending' },
-      { name: 'Production Deployment', date: '2024-08-31', status: 'Pending' }
-    ],
-    relatedApplications: ['app-003']
+    id: "resource-capacity-planning",
+    title: "Resource Capacity Planning Tool",
+    description: "Optimize resource allocation across the project portfolio with demand forecasting",
+    icon: Users,
+    category: "Resource Management",
+    portfolioType: "All Projects",
+    projectPhase: "Planning",
+    deliveryModel: "Tool",
+    updateFrequency: "Weekly",
+    complexity: "High",
+    realtime: false,
+    keyMetrics: ["Capacity Utilization", "Demand Forecast", "Skill Gaps", "Allocation Efficiency"],
+    reportingLevel: "Portfolio Manager"
   },
   {
-    id: 'proj-004',
-    name: 'Cloud Migration Program',
-    description: 'Migrate on-premises applications to cloud infrastructure',
-    category: 'Infrastructure',
-    status: 'In Progress',
-    priority: 'High',
-    progress: 75,
-    startDate: '2023-06-01',
-    endDate: '2024-03-31',
-    budget: {
-      allocated: 3200000,
-      spent: 2400000
-    },
-    team: {
-      lead: 'David Kim',
-      size: 15
-    },
-    businessUnit: 'IT',
-    stakeholders: ['John Smith (CTO)', 'Michael Chen (Infrastructure Lead)'],
-    risks: {
-      level: 'Low',
-      count: 1
-    },
-    dependencies: ['Security Compliance Review', 'Network Configuration'],
-    milestones: [
-      { name: 'Assessment & Planning', date: '2023-08-31', status: 'Completed' },
-      { name: 'Pilot Migration', date: '2023-11-30', status: 'Completed' },
-      { name: 'Phase 1 Migration', date: '2024-01-31', status: 'Completed' },
-      { name: 'Phase 2 Migration', date: '2024-03-31', status: 'In Progress' }
-    ],
-    relatedApplications: ['app-004']
+    id: "budget-variance-analysis",
+    title: "Budget & Cost Variance Analysis",
+    description: "Track budget performance and forecast cost variances across all projects",
+    icon: DollarSign,
+    category: "Budget & Finance",
+    portfolioType: "All Projects",
+    projectPhase: "All Phases",
+    deliveryModel: "Report",
+    updateFrequency: "Monthly",
+    complexity: "Medium",
+    realtime: false,
+    keyMetrics: ["Budget Variance", "EAC", "Burn Rate", "Forecast Accuracy"],
+    reportingLevel: "Executive"
   },
   {
-    id: 'proj-005',
-    name: 'Legacy System Retirement',
-    description: 'Decommission outdated systems and migrate data',
-    category: 'System Retirement',
-    status: 'On Hold',
-    priority: 'Medium',
-    progress: 25,
-    startDate: '2024-01-15',
-    endDate: '2024-06-30',
-    budget: {
-      allocated: 800000,
-      spent: 150000
-    },
-    team: {
-      lead: 'Robert Taylor',
-      size: 6
-    },
-    businessUnit: 'Finance',
-    stakeholders: ['Jennifer Lee (CFO)', 'Michael Chen (IT Lead)'],
-    risks: {
-      level: 'High',
-      count: 4
-    },
-    dependencies: ['Data Migration Approval', 'User Training Completion'],
-    milestones: [
-      { name: 'Data Assessment', date: '2024-02-29', status: 'Completed' },
-      { name: 'Migration Planning', date: '2024-04-15', status: 'Pending' },
-      { name: 'System Decommission', date: '2024-06-30', status: 'Pending' }
-    ],
-    relatedApplications: ['app-006']
+    id: "portfolio-risk-register",
+    title: "Portfolio Risk Register & Mitigation",
+    description: "Centralized risk management across all projects with mitigation tracking",
+    icon: ShieldAlert,
+    category: "Risk Management",
+    portfolioType: "All Projects",
+    projectPhase: "All Phases",
+    deliveryModel: "Dashboard",
+    updateFrequency: "Weekly",
+    complexity: "High",
+    realtime: false,
+    keyMetrics: ["Risk Count", "Exposure Value", "Mitigation Status", "Top Risks"],
+    reportingLevel: "Portfolio Manager"
   },
   {
-    id: 'proj-006',
-    name: 'Supply Chain Digital Twin',
-    description: 'Create digital twin model for supply chain optimization',
-    category: 'Digital Innovation',
-    status: 'Completed',
-    priority: 'Medium',
-    progress: 100,
-    startDate: '2023-01-01',
-    endDate: '2023-10-31',
-    budget: {
-      allocated: 1500000,
-      spent: 1450000
-    },
-    team: {
-      lead: 'Lisa Wang',
-      size: 10
-    },
-    businessUnit: 'Operations',
-    stakeholders: ['Mark Johnson (COO)', 'Dr. James Wilson (Chief Data Officer)'],
-    risks: {
-      level: 'Low',
-      count: 0
-    },
-    dependencies: [],
-    milestones: [
-      { name: 'Proof of Concept', date: '2023-03-31', status: 'Completed' },
-      { name: 'Development', date: '2023-07-31', status: 'Completed' },
-      { name: 'Testing & Validation', date: '2023-09-30', status: 'Completed' },
-      { name: 'Production Launch', date: '2023-10-31', status: 'Completed' }
-    ],
-    relatedApplications: ['app-005']
+    id: "dependency-management",
+    title: "Cross-Project Dependency Management",
+    description: "Identify and manage dependencies between projects to reduce conflicts",
+    icon: GitBranch,
+    category: "Delivery Analytics",
+    portfolioType: "Transformation Projects",
+    projectPhase: "Planning",
+    deliveryModel: "Tool",
+    updateFrequency: "Real-time",
+    complexity: "High",
+    realtime: true,
+    keyMetrics: ["Dependency Count", "Critical Path", "Bottlenecks", "Conflict Risk"],
+    reportingLevel: "Portfolio Manager"
+  },
+  {
+    id: "benefits-realization-tracking",
+    title: "Benefits Realization Tracking",
+    description: "Track and measure actual benefits realized against projected benefits",
+    icon: TrendingUp,
+    category: "Delivery Analytics",
+    portfolioType: "Transformation Projects",
+    projectPhase: "Closure",
+    deliveryModel: "Report",
+    updateFrequency: "Quarterly",
+    complexity: "Medium",
+    realtime: false,
+    keyMetrics: ["Benefits Achieved", "ROI Realized", "Value Gap", "Time to Value"],
+    reportingLevel: "Executive"
+  },
+  {
+    id: "agile-portfolio-metrics",
+    title: "Agile Portfolio Metrics Dashboard",
+    description: "Track agile metrics across multiple teams and projects",
+    icon: Gauge,
+    category: "Delivery Analytics",
+    portfolioType: "IT Projects",
+    projectPhase: "Execution",
+    deliveryModel: "Dashboard",
+    updateFrequency: "Real-time",
+    complexity: "Medium",
+    realtime: true,
+    keyMetrics: ["Velocity", "Sprint Health", "Cycle Time", "Throughput"],
+    reportingLevel: "Team"
+  },
+  {
+    id: "portfolio-prioritization",
+    title: "Portfolio Prioritization Framework",
+    description: "Data-driven framework for prioritizing projects based on value, risk, and strategic alignment",
+    icon: Target,
+    category: "Portfolio Dashboard",
+    portfolioType: "All Projects",
+    projectPhase: "Initiation",
+    deliveryModel: "Assessment",
+    updateFrequency: "Quarterly",
+    complexity: "High",
+    realtime: false,
+    keyMetrics: ["Strategic Alignment", "Value Score", "Risk Score", "Priority Rank"],
+    reportingLevel: "Executive"
+  },
+  {
+    id: "project-intake-pipeline",
+    title: "Project Intake & Approval Pipeline",
+    description: "Streamline project requests with automated intake, scoring, and approval workflows",
+    icon: Inbox,
+    category: "Portfolio Dashboard",
+    portfolioType: "All Projects",
+    projectPhase: "Initiation",
+    deliveryModel: "Tool",
+    updateFrequency: "Real-time",
+    complexity: "Medium",
+    realtime: true,
+    keyMetrics: ["Pending Requests", "Approval Rate", "Time to Decision", "Queue Length"],
+    reportingLevel: "Portfolio Manager"
+  },
+  {
+    id: "stakeholder-engagement-tracking",
+    title: "Stakeholder Engagement Tracking",
+    description: "Monitor stakeholder engagement levels and satisfaction across projects",
+    icon: Users,
+    category: "Delivery Analytics",
+    portfolioType: "Transformation Projects",
+    projectPhase: "All Phases",
+    deliveryModel: "Dashboard",
+    updateFrequency: "Weekly",
+    complexity: "Low",
+    realtime: false,
+    keyMetrics: ["Engagement Score", "Satisfaction", "Communication Frequency", "Issue Resolution"],
+    reportingLevel: "Project Manager"
+  },
+  {
+    id: "portfolio-scenario-planning",
+    title: "Portfolio Scenario Planning Tool",
+    description: "Model different portfolio scenarios to optimize resource allocation and outcomes",
+    icon: GitCompare,
+    category: "Portfolio Dashboard",
+    portfolioType: "All Projects",
+    projectPhase: "Planning",
+    deliveryModel: "Tool",
+    updateFrequency: "On-demand",
+    complexity: "High",
+    realtime: false,
+    keyMetrics: ["Scenario Count", "Optimization Score", "Resource Impact", "Value Projection"],
+    reportingLevel: "Executive"
+  },
+  {
+    id: "milestone-delivery-tracking",
+    title: "Milestone & Deliverable Tracking",
+    description: "Track key milestones and deliverables across the entire project portfolio",
+    icon: CheckCircle,
+    category: "Project Health Tracking",
+    portfolioType: "All Projects",
+    projectPhase: "Execution",
+    deliveryModel: "Dashboard",
+    updateFrequency: "Real-time",
+    complexity: "Low",
+    realtime: true,
+    keyMetrics: ["Milestones Completed", "On-time Delivery", "Deliverable Quality", "Dependencies"],
+    reportingLevel: "Project Manager"
+  },
+  {
+    id: "lessons-learned-repository",
+    title: "Lessons Learned Repository",
+    description: "Capture and share lessons learned across projects to improve future delivery",
+    icon: BookOpen,
+    category: "Delivery Analytics",
+    portfolioType: "All Projects",
+    projectPhase: "Closure",
+    deliveryModel: "Tool",
+    updateFrequency: "On-demand",
+    complexity: "Low",
+    realtime: false,
+    keyMetrics: ["Lessons Captured", "Reuse Rate", "Improvement Impact", "Knowledge Sharing"],
+    reportingLevel: "Portfolio Manager"
   }
 ];
 
-export const projectCategories = [
-  'All Categories',
-  'Digital Transformation',
-  'System Modernization',
-  'AI/ML',
-  'Infrastructure',
-  'System Retirement',
-  'Digital Innovation'
-];
-
-export const projectStatuses = [
-  'All Statuses',
-  'Planning',
-  'In Progress',
-  'On Hold',
-  'Completed',
-  'Cancelled'
-];
+export const projectPortfolioFilters = {
+  serviceCategory: ["Portfolio Dashboard", "Project Health Tracking", "Resource Management", "Budget & Finance", "Risk Management", "Delivery Analytics"],
+  portfolioType: ["Transformation Projects", "IT Projects", "Business Projects", "Innovation Projects", "All Projects"],
+  projectPhase: ["Initiation", "Planning", "Execution", "Monitoring", "Closure", "All Phases"],
+  deliveryModel: ["Dashboard", "Report", "Tool", "Consulting", "Assessment"],
+  updateFrequency: ["Real-time", "Daily", "Weekly", "Monthly"],
+  reportingLevel: ["Executive", "Portfolio Manager", "Project Manager", "Team"],
+  complexity: ["Low", "Medium", "High"]
+};
