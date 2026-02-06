@@ -27,7 +27,7 @@ export function LoginModal({ isOpen, onClose, context }: LoginModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Navigate to Stage 2 with context
-    navigate("/transact-app", {
+    navigate("/stage2", {
       state: context,
     });
     onClose();
