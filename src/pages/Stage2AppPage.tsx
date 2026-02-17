@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { 
   ArrowLeft, 
   LayoutGrid, 
@@ -53,6 +53,13 @@ export default function Stage2AppPage() {
     serviceName = "Portfolio Service",
   } = state;
 
+  // Sync active service with URL for templates
+  useEffect(() => {
+    if (location.pathname.includes('/stage2/templates')) {
+      setActiveService("AI DocWriter");
+    }
+  }, [location.pathname]);
+
   const marketplaceLabel = marketplace
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -70,6 +77,8 @@ export default function Stage2AppPage() {
       case "templates":
         return "AI DocWriter";
       default:
+        // Check URL path as fallback
+        if (location.pathname.includes('/stage2/templates')) return "AI DocWriter";
         return "Overview";
     }
   });
@@ -132,6 +141,10 @@ export default function Stage2AppPage() {
   };
 
   const handleServiceClick = (service: string) => {
+    if (service === "AI DocWriter") {
+      navigate('/stage2/templates/overview');
+      return;
+    }
     setActiveService(service);
     setActiveSubService(null); // Reset sub-service when switching main service
   };
@@ -191,15 +204,6 @@ export default function Stage2AppPage() {
             )}
             
             <button 
-              onClick={() => handleServiceClick("AI DocWriter")}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg ${isActiveService("AI DocWriter")}`}
-              title="AI DocWriter"
-            >
-              <PenTool className="w-4 h-4 flex-shrink-0" />
-              {!leftSidebarCollapsed && "AI DocWriter"}
-            </button>
-            
-            <button 
               onClick={() => handleServiceClick("Learning Center")}
               className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg ${isActiveService("Learning Center")}`}
               title="Learning Center"
@@ -233,6 +237,15 @@ export default function Stage2AppPage() {
             >
               <RefreshCw className="w-4 h-4 flex-shrink-0" />
               {!leftSidebarCollapsed && "Lifecycle Management"}
+            </button>
+            
+            <button 
+              onClick={() => handleServiceClick("AI DocWriter")}
+              className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg ${isActiveService("AI DocWriter")}`}
+              title="AI DocWriter"
+            >
+              <PenTool className="w-4 h-4 flex-shrink-0" />
+              {!leftSidebarCollapsed && "AI DocWriter"}
             </button>
             
             <button 
@@ -401,6 +414,47 @@ export default function Stage2AppPage() {
                     </div>
                   </div>
                 </div>
+              ) : activeService === "AI DocWriter" ? (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900 mb-3">Templates & Requests</h3>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => navigate('/stage2/templates/library')}
+                        className={`w-full flex items-center gap-3 p-3 text-sm rounded-lg transition-colors ${
+                          location.pathname.includes('/library')
+                            ? "bg-orange-50 text-orange-700 border border-orange-200" 
+                            : "text-gray-700 hover:bg-gray-50 border border-transparent"
+                        }`}
+                      >
+                        <BookOpen className="w-4 h-4 flex-shrink-0" />
+                        <span className="font-medium">Template Library</span>
+                      </button>
+                      <button
+                        onClick={() => navigate('/stage2/templates/my-requests')}
+                        className={`w-full flex items-center gap-3 p-3 text-sm rounded-lg transition-colors ${
+                          location.pathname.includes('/my-requests')
+                            ? "bg-orange-50 text-orange-700 border border-orange-200" 
+                            : "text-gray-700 hover:bg-gray-50 border border-transparent"
+                        }`}
+                      >
+                        <FileText className="w-4 h-4 flex-shrink-0" />
+                        <span className="font-medium">My Requests</span>
+                      </button>
+                      <button
+                        onClick={() => navigate('/stage2/templates/new-request')}
+                        className={`w-full flex items-center gap-3 p-3 text-sm rounded-lg transition-colors ${
+                          location.pathname.includes('/new-request')
+                            ? "bg-orange-50 text-orange-700 border border-orange-200" 
+                            : "text-gray-700 hover:bg-gray-50 border border-transparent"
+                        }`}
+                      >
+                        <PenTool className="w-4 h-4 flex-shrink-0" />
+                        <span className="font-medium">New Request</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ) : activeService === "Overview" ? (
                 <div className="space-y-4">
                   <div>
@@ -487,7 +541,11 @@ export default function Stage2AppPage() {
 
         {/* Main Content */}
         <div className="flex-1 bg-gray-50 overflow-y-auto">
-          {activeService === "Portfolio Management" && activeSubService ? (
+          {activeService === "AI DocWriter" ? (
+            <div className="h-full">
+              <Outlet />
+            </div>
+          ) : activeService === "Portfolio Management" && activeSubService ? (
             <div className="h-full">
               {activeSubService === "portfolio-health-dashboard" && (
                 <PortfolioHealthDashboard className="h-full" />
@@ -611,6 +669,8 @@ export default function Stage2AppPage() {
                       "Welcome to the DTMP Service Hub" :
                       activeService === "Learning Center" ?
                       "Select a course from the sidebar to view details and continue learning" :
+                      activeService === "AI DocWriter" ?
+                      "Select an option from the sidebar to get started with document generation" :
                       `${activeService} tools and interfaces would be displayed here`
                     }
                   </p>
@@ -623,6 +683,11 @@ export default function Stage2AppPage() {
                     <p className="text-sm text-gray-400">
                       Select a course from the sidebar to get started
                     </p>
+                  )}
+                  {activeService === "AI DocWriter" && (
+                    <Button onClick={() => navigate('/stage2/templates/overview')} className="bg-orange-600 hover:bg-orange-700">
+                      Go to Dashboard
+                    </Button>
                   )}
                 </div>
               </div>

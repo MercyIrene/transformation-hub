@@ -25,6 +25,12 @@ import PortfolioDetailPage from "./pages/PortfolioDetailPage";
 import NotFound from "./pages/NotFound";
 import DigitalIntelligencePage from "./pages/DigitalIntelligencePage";
 import DigitalIntelligenceDetailPage from "./pages/DigitalIntelligenceDetailPage";
+import TemplatesOverview from "./pages/stage2/templates/TemplatesOverview";
+import TemplateLibraryPage from "./pages/stage2/templates/TemplateLibraryPage";
+import TemplateDetailPage from "./pages/stage2/templates/TemplateDetailPage";
+import NewRequestPage from "./pages/stage2/templates/NewRequestPage";
+import MyRequestsPage from "./pages/stage2/templates/MyRequestsPage";
+import RequestDetailPage from "./pages/stage2/templates/RequestDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -44,7 +50,14 @@ const App = () => (
 
           {/* Stage 2 - Transact App */}
           <Route path="/transact-app" element={<TransactAppPage />} />
-          <Route path="/stage2" element={<Stage2AppPage />} />
+          <Route path="/stage2" element={<Stage2AppPage />}>
+            <Route path="templates/overview" element={<TemplatesOverview />} />
+            <Route path="templates/library" element={<TemplateLibraryPage />} />
+            <Route path="templates/library/:templateId" element={<TemplateDetailPage />} />
+            <Route path="templates/new-request" element={<NewRequestPage />} />
+            <Route path="templates/my-requests" element={<MyRequestsPage />} />
+            <Route path="templates/my-requests/:requestId" element={<RequestDetailPage />} />
+          </Route>
           
           {/* Main platform routes */}
           <Route path="/dbp" element={<ComingSoonPage pageName="DBP" />} />
