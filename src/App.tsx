@@ -12,6 +12,7 @@ import KnowledgeCenterPage from "./pages/KnowledgeCenterPage";
 import KnowledgeCenterDetailPage from "./pages/KnowledgeCenterDetailPage";
 import TransactAppPage from "./pages/TransactAppPage";
 import Stage2AppPage from "./pages/Stage2AppPage";
+import Stage3TODashboard from "./pages/Stage3TODashboard";
 import TemplatesPage from "./pages/TemplatesPage";
 import TemplatesDetailPage from "./pages/TemplatesDetailPage";
 import { SolutionSpecsPage } from "./pages/SolutionSpecsPage";
@@ -100,6 +101,9 @@ const App = () => (
             <Route path="my-requests" element={<MyRequestsPage />} />
             <Route path="my-requests/:requestId" element={<TemplatesRequestDetailPage />} />
           </Route>
+          
+          {/* Stage 3 - Transformation Office Dashboard */}
+          <Route path="/stage3" element={<Stage3TODashboard />} />
           
           {/* Main platform routes */}
           <Route path="/dbp" element={<ComingSoonPage pageName="DBP" />} />

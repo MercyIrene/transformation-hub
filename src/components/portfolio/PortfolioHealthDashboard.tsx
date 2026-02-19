@@ -132,9 +132,10 @@ export default function PortfolioHealthDashboard({ className = "" }: PortfolioHe
   const selectedAppData = selectedApp ? mockApplications.find(app => app.id === selectedApp) : null;
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 h-full flex flex-col overflow-hidden ${className}`}>
-      {/* Portfolio Health Overview KPIs */}
-      <div className="p-4 lg:p-6 border-b border-gray-200 flex-shrink-0">
+    <div className={`bg-white rounded-lg border border-gray-200 h-full flex flex-col ${className}`}>
+      <div className="flex-1 overflow-auto">
+        {/* Portfolio Health Overview KPIs */}
+        <div className="p-4 lg:p-6 border-b border-gray-200 bg-white">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           <div className="bg-blue-50 p-3 lg:p-4 rounded-lg">
             <div className="flex items-center gap-2 lg:gap-3 mb-2">
@@ -199,8 +200,8 @@ export default function PortfolioHealthDashboard({ className = "" }: PortfolioHe
         </div>
       </div>
 
-      {/* Filters & Search */}
-      <div className="p-4 lg:p-6 border-b border-gray-200 flex-shrink-0">
+        {/* Filters & Search */}
+        <div className="p-4 lg:p-6 border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -286,9 +287,9 @@ export default function PortfolioHealthDashboard({ className = "" }: PortfolioHe
         </div>
       </div>
 
-      {/* Bulk Actions Bar */}
-      {selectedApplications.length > 0 && (
-        <div className="px-6 py-3 bg-blue-50 border-b border-gray-200">
+        {/* Bulk Actions Bar */}
+        {selectedApplications.length > 0 && (
+          <div className="px-6 py-3 bg-blue-50 border-b border-gray-200 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-blue-900">
               {selectedApplications.length} application{selectedApplications.length > 1 ? 's' : ''} selected
@@ -309,14 +310,13 @@ export default function PortfolioHealthDashboard({ className = "" }: PortfolioHe
             </div>
           </div>
         </div>
-      )}
+        )}
 
-      {/* Application Table */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-auto">
-          <div className="min-w-full">
+        {/* Application Table */}
+        <div className="bg-white">
+          <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                 <tr>
                   <th className="px-4 lg:px-6 py-3 text-left">
                     <Checkbox
@@ -429,7 +429,7 @@ export default function PortfolioHealthDashboard({ className = "" }: PortfolioHe
 
         {/* Pagination */}
         {filteredApplications.length > itemsPerPage && (
-          <div className="px-4 lg:px-6 py-4 border-t border-gray-200 flex-shrink-0">
+          <div className="px-4 lg:px-6 py-4 border-t border-gray-200 bg-white sticky bottom-0">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <p className="text-sm text-gray-700">
                 Showing 1 to {Math.min(itemsPerPage, filteredApplications.length)} of {filteredApplications.length} results

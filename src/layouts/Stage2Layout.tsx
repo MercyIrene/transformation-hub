@@ -19,9 +19,19 @@ import {
   X,
   Layers,
   Zap,
-  FolderOpen
+  FolderOpen,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Stage2Layout() {
   const location = useLocation();
@@ -71,17 +81,21 @@ export default function Stage2Layout() {
         {/* Header */}
         <div className="p-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
-            <div className={`flex items-center gap-3 ${leftSidebarCollapsed ? 'justify-center' : ''}`}>
+            <button 
+              onClick={() => navigate('/marketplaces')}
+              className={`flex items-center gap-3 ${leftSidebarCollapsed ? 'justify-center' : ''} hover:opacity-80 transition-opacity`}
+              title="Back to Marketplaces"
+            >
               <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
                 <LayoutGrid className="w-4 h-4 text-white" />
               </div>
               {!leftSidebarCollapsed && (
-                <div>
+                <div className="text-left">
                   <h2 className="font-semibold text-sm">DTMP Platform</h2>
                   <p className="text-xs text-gray-500">Stage 2 - Service Hub</p>
                 </div>
               )}
-            </div>
+            </button>
             <Button
               variant="ghost"
               size="sm"
@@ -163,17 +177,56 @@ export default function Stage2Layout() {
 
         {/* User Profile */}
         <div className="p-4 border-t border-gray-200 flex-shrink-0">
-          <div className={`flex items-center gap-3 mb-3 ${leftSidebarCollapsed ? 'justify-center' : ''}`}>
-            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-orange-700 text-xs font-medium">JD</span>
-            </div>
-            {!leftSidebarCollapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">John Doe</p>
-                <p className="text-xs text-gray-500">Portfolio Manager</p>
+          {!leftSidebarCollapsed ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 transition-colors">
+                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-orange-700 text-xs font-medium">JD</span>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium truncate">John Doe</p>
+                    <p className="text-xs text-gray-500">Portfolio Manager</p>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Switch Profile</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                      <span className="text-orange-700 text-xs font-medium">JD</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">John Doe</p>
+                      <p className="text-xs text-gray-500">End User</p>
+                    </div>
+                  </div>
+                  <Check className="w-4 h-4 text-orange-600" />
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => navigate('/stage3')}
+                  className="flex items-center gap-2"
+                >
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-700 text-xs font-medium">SM</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Sarah Miller</p>
+                    <p className="text-xs text-gray-500">TO Team Member</p>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex items-center justify-center">
+              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-orange-700 text-xs font-medium">JD</span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
