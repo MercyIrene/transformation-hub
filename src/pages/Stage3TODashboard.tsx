@@ -53,7 +53,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { mockRequests, requestMetrics, teamMembers, RequestStatus, RequestPriority, ServiceRequest } from "@/data/transformationOffice";
-import { RequestDetailDrawer } from "@/components/stage3";
 
 export default function Stage3TODashboard() {
   const navigate = useNavigate();
@@ -68,21 +67,12 @@ export default function Stage3TODashboard() {
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState("all-requests");
   
-  // Request detail drawer state
-  const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // Request data state (local copy for updates)
+  const [requests, setRequests] = useState<ServiceRequest[]>(mockRequests);
 
   // Helper function to open request detail
   const handleRequestClick = (request: ServiceRequest) => {
-    setSelectedRequest(request);
-    setIsDrawerOpen(true);
-  };
-
-  // Helper function to close drawer
-  const handleCloseDrawer = () => {
-    setIsDrawerOpen(false);
-    // Delay clearing selected request to allow animation to complete
-    setTimeout(() => setSelectedRequest(null), 300);
+    navigate(`/stage3/request/${request.id}`);
   };
 
   // Helper function to get navigation item class
@@ -109,7 +99,7 @@ export default function Stage3TODashboard() {
 
   // Filter requests
   const filteredRequests = useMemo(() => {
-    return mockRequests.filter(req => {
+    return requests.filter(req => {
       const matchesSearch = req.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            req.requestNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            req.requester.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -122,7 +112,7 @@ export default function Stage3TODashboard() {
 
       return matchesSearch && matchesStatus && matchesPriority && matchesType && matchesAssignee;
     });
-  }, [searchTerm, statusFilter, priorityFilter, typeFilter, assigneeFilter]);
+  }, [requests, searchTerm, statusFilter, priorityFilter, typeFilter, assigneeFilter]);
 
   const getStatusBadge = (status: RequestStatus) => {
     const config = {
@@ -693,13 +683,6 @@ export default function Stage3TODashboard() {
           </div>
         </div>
       </div>
-
-      {/* Request Detail Drawer */}
-      <RequestDetailDrawer
-        request={selectedRequest}
-        isOpen={isDrawerOpen}
-        onClose={handleCloseDrawer}
-      />
     </div>
   );
 }

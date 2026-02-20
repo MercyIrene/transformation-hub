@@ -45,6 +45,20 @@ export interface ServiceRequest {
   notes: string[];
   slaStatus: "on-track" | "at-risk" | "breached";
   customerSatisfaction?: number;
+  generatedDocument?: string; // AI-generated document content
+  buildAccess?: {
+    accessUrl: string;
+    username: string;
+    password: string;
+    additionalCredentials?: string;
+    setupInstructions?: string;
+    attachments?: string[];
+  };
+  supportUpdates?: Array<{
+    type: "diagnosis" | "action-taken" | "waiting-user" | "resolved" | "escalated";
+    message: string;
+    timestamp: string;
+  }>;
 }
 
 export const mockRequests: ServiceRequest[] = [

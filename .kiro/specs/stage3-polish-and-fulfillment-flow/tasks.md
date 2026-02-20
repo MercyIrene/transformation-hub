@@ -13,7 +13,7 @@
   - Maintain filter state within request views
   - Update filter UI to show active filters
 
-- [ ] 1.3 Fix console errors and warnings
+- [x] 1.3 Fix console errors and warnings
   - Review browser console for errors
   - Fix any TypeScript errors
   - Remove unused imports and variables
@@ -39,7 +39,7 @@
   - Show dates (created, updated, due)
   - Show tags and related assets
 
-- [ ] 2.4 Add type-specific fields display
+- [x] 2.4 Add type-specific fields display
   - Conditional rendering based on request type
   - Display template-specific fields
   - Display spec-specific fields
@@ -48,25 +48,25 @@
 
 ## Phase 3: Workflow Actions
 
-- [ ] 3.1 Create WorkflowActions component
+- [x] 3.1 Create WorkflowActions component
   - Create new component file
   - Define props interface
   - Implement action button layout
 
-- [ ] 3.2 Implement action buttons by request type
+- [x] 3.2 Implement action buttons by request type
   - Define actions for DTMP templates
   - Define actions for solution specs
   - Define actions for solution builds
   - Define actions for support services
   - Conditional rendering based on type and status
 
-- [ ] 3.3 Add status update logic
+- [x] 3.3 Add status update logic
   - Implement status transition validation
   - Update request status on action click
   - Show confirmation for status changes
   - Update UI after status change
 
-- [ ] 3.4 Add success/error feedback
+- [x] 3.4 Add success/error feedback
   - Implement toast notifications
   - Show success message on update
   - Show error message on failure
