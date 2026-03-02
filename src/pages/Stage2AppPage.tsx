@@ -114,10 +114,8 @@ import TemplatesLibrary from "./lifecycle/TemplatesLibrary";
 import ApprovalsPage from "./lifecycle/ApprovalsPage";
 import ProjectsPage from "./lifecycle/ProjectsPage";
 import ApplicationsPage from "./lifecycle/ApplicationsPage";
-import { solutionBuilds } from "@/data/blueprints/solutionBuilds";
 import { buildRequests, type BuildRequest, deliveryTeams } from "@/data/solutionBuild";
 import { Progress } from "@/components/ui/progress";
-import type { SolutionType } from "@/data/blueprints/solutionSpecs";
 import IntelligenceWorkspacePage from "@/pages/stage2/intelligence/IntelligenceWorkspacePage";
 import SolutionBuildWorkspacePage from "@/pages/stage2/solutionBuild/SolutionBuildWorkspacePage";
 import { supportTickets, serviceRequests, knowledgeArticles, ServiceRequest } from "@/data/supportData";
@@ -1148,26 +1146,6 @@ export default function Stage2AppPage() {
     });
   };
 
-  // Solution Build sub-services - Use actual solution builds
-  const solutionBuildSubServices = solutionBuilds.map(build => ({
-    id: build.id,
-    name: build.title,
-    description: build.description,
-    solutionType: build.solutionType,
-    buildComplexity: build.buildComplexity,
-    automationLevel: build.automationLevel,
-    codeSamples: build.codeSamples,
-    technologyStack: build.technologyStack
-  }));
-
-  const SOLUTION_TYPE_COLORS: Record<SolutionType, { bg: string; text: string; border: string }> = {
-    DBP: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
-    DXP: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
-    DWS: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200" },
-    DIA: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
-    SDO: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
-  };
-
   // Digital Intelligence Stage 2 workspace menu
   const intelligenceSubServices = [
     {
@@ -2024,39 +2002,6 @@ export default function Stage2AppPage() {
                     </div>
                   </div>
                 </div>
-              ) : activeService === "Solution Build" ? (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-3">Solution Builds</h3>
-                    <div className="space-y-2">
-                      {solutionBuildSubServices.map((build) => {
-                        const colors = SOLUTION_TYPE_COLORS[build.solutionType];
-                        return (
-                          <button
-                            key={build.id}
-                            onClick={() => handleSubServiceClick(build.id)}
-                            className={`w-full flex items-start gap-3 p-3 text-sm rounded-lg transition-colors ${
-                              activeSubService === build.id 
-                                ? "bg-orange-50 text-orange-700 border border-orange-200" 
-                                : "text-gray-700 hover:bg-gray-50 border border-transparent"
-                            }`}
-                          >
-                            <Code className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <div className="text-left flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium">{build.name}</span>
-                                <Badge className={`${colors.bg} ${colors.text} ${colors.border} border text-xs`} variant="outline">
-                                  {build.solutionType}
-                                </Badge>
-                              </div>
-                              <div className="text-xs text-gray-500 line-clamp-2">{build.description}</div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
               ) : activeService === "Digital Intelligence" ? (
                 <div className="space-y-4">
                   <div>
@@ -2161,8 +2106,6 @@ export default function Stage2AppPage() {
                       ? learningSubServices.find(s => s.id === activeSubService)?.name
                       : activeService === "Lifecycle Management"
                       ? activeSubService.charAt(0).toUpperCase() + activeSubService.slice(1)
-                      : activeService === "Solution Build"
-                      ? solutionBuildSubServices.find(s => s.id === activeSubService)?.name
                       : activeService === "Digital Intelligence"
                       ? intelligenceSubServices.find(s => s.id === activeSubService)?.name
                       : activeService === "Support Services"
@@ -2177,8 +2120,6 @@ export default function Stage2AppPage() {
                       ? portfolioSubServices.find(s => s.id === activeSubService)?.description
                       : activeService === "Learning Center"
                       ? learningSubServices.find(s => s.id === activeSubService)?.description
-                      : activeService === "Solution Build"
-                      ? `${solutionBuildSubServices.find(s => s.id === activeSubService)?.solutionType} Solution`
                       : activeService === "Digital Intelligence"
                       ? intelligenceSubServices.find(s => s.id === activeSubService)?.description
                       : activeService === "Support Services"
@@ -2419,8 +2360,6 @@ export default function Stage2AppPage() {
                         : "Select a course from the sidebar to view details and continue learning") :
                       activeService === "Lifecycle Management" ?
                       "Select a lifecycle service from the sidebar to get started" :
-                      activeService === "Solution Build" ?
-                      "Select a solution build from the sidebar to view details and deployment guides" :
                       activeService === "Digital Intelligence" ?
                       "Select an intelligence service from the sidebar to view AI-powered dashboards" :
                       activeService === "Support Services" ?
@@ -2443,11 +2382,6 @@ export default function Stage2AppPage() {
                   {activeService === "Lifecycle Management" && (
                     <p className="text-sm text-gray-400">
                       Select a lifecycle service from the sidebar to get started
-                    </p>
-                  )}
-                  {activeService === "Solution Build" && (
-                    <p className="text-sm text-gray-400">
-                      Select a solution build from the sidebar to get started
                     </p>
                   )}
                   {activeService === "Digital Intelligence" && (
