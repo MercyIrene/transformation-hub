@@ -4,6 +4,15 @@ import { X, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { setUserAuthenticated } from "@/data/sessionAuth";
+import { setSessionRole, isTOStage3Role, type SessionRole } from "@/data/sessionRole";
+
+const resolveRoleFromEmail = (email: string): SessionRole => {
+  const lower = email.toLowerCase().trim();
+  if (lower === "admin@to.dtmp.com") return "to-admin";
+  if (lower.endsWith("@to.dtmp.com")) return "to-ops";
+  return "business-user";
+};
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -32,9 +41,20 @@ export function LoginModal({ isOpen, onClose, context, onLoginSuccess }: LoginMo
     e.preventDefault();
     onClose();
 
+    // Persist auth state and role derived from email
+    const role = resolveRoleFromEmail(email);
+    setUserAuthenticated(true);
+    setSessionRole(role);
+
     // Use custom callback if provided
     if (onLoginSuccess) {
       onLoginSuccess();
+      return;
+    }
+
+    // TO roles go straight to Stage 3
+    if (isTOStage3Role(role)) {
+      navigate("/stage3/dashboard");
       return;
     }
 
@@ -188,6 +208,17 @@ export function LoginModal({ isOpen, onClose, context, onLoginSuccess }: LoginMo
             Sign up
           </button>
         </p>
+
+        {/* Demo credential hints */}
+        <div className="mt-5 border-t pt-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Demo credentials</p>
+          <div className="space-y-1 text-xs text-gray-500">
+            <p><span className="font-medium text-gray-700">TO Ops:</span> any@to.dtmp.com</p>
+            <p><span className="font-medium text-gray-700">TO Admin:</span> admin@to.dtmp.com</p>
+            <p><span className="font-medium text-gray-700">Business User:</span> any other email</p>
+            <p className="text-gray-400 mt-1">Password: any value</p>
+          </div>
+        </div>
       </div>
     </div>
   );
