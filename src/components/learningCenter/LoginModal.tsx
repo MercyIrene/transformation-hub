@@ -27,7 +27,7 @@ interface LoginModalProps {
     dashboardName?: string;
     requestDescription?: string;
   };
-  onLoginSuccess?: () => void;
+  onLoginSuccess?: (email?: string) => void;
 }
 
 export function LoginModal({ isOpen, onClose, context, onLoginSuccess }: LoginModalProps) {
@@ -48,7 +48,7 @@ export function LoginModal({ isOpen, onClose, context, onLoginSuccess }: LoginMo
 
     // Use custom callback if provided
     if (onLoginSuccess) {
-      onLoginSuccess();
+      onLoginSuccess(email);
       return;
     }
 
